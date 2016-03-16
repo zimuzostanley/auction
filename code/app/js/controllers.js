@@ -20,10 +20,9 @@ controllers.controller('InventoryCtrl', ['$scope', 'InventoryService', 'SessionS
 
 // Auction controller
 controllers.controller('AuctionCtrl', ['$scope', 'AuctionService', 'SessionService', function($scope, AuctionService, SessionService) {
-    $scope.phones = AuctionService.get({id: SessionService.getUser().id}, function(auction) {
+    $scope.auction = AuctionService.get({}, function(auction) {
 	
     });
-    $scope.amount = "5";
 }]);
 
 // Login controller

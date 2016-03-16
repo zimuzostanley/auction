@@ -51,7 +51,7 @@ var create_players = function(num) {
  */
 var create_auctions = function(numq, numd) {
     for (var i = 1; i <= numq; i++) {
-	var auctionq = {bread: i, carrot: i + 1, diamond: 1 + 2, player_id: i};
+	var auctionq = {item: 'bread', quantity: i + 5, player_id: i};
 	conn.query('INSERT INTO Auction SET ?', auctionq, function(err, res) {
 	    if (err) {
 		return console.log(err);
@@ -60,7 +60,7 @@ var create_auctions = function(numq, numd) {
     }
 
     for (var i = 1; i < numd; i++) {
-	var auctiond = {bread: i, carrot: i + 1, diamond: 1 + 2, player_id: numq + i, cur_state: "done"};
+	var auctiond = {item: 'diamond', quantity: i, player_id: numq + i, cur_state: "done"};
 	conn.query('INSERT INTO Auction SET ?', auctiond, function(err, res) {
 	    if (err) {
 		return console.log(err);
@@ -69,7 +69,7 @@ var create_auctions = function(numq, numd) {
     }
 
 
-    var auctionr = {bread: 5, carrot: 6, diamond: 7, player_id: numq + numd, cur_state: "running"};
+    var auctionr = {item: 'carrot', quantity: 37, player_id: numq + numd, cur_state: "running", cur_bid_player_id: 1};
     conn.query('INSERT INTO Auction SET ?', auctionr, function(err, res) {
 	if (err) {
 	    return console.log(err);

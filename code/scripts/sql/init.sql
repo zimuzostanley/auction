@@ -36,13 +36,13 @@ CREATE TABLE Player (
 -- Auction
 CREATE TABLE Auction (
        id INT PRIMARY KEY AUTO_INCREMENT,
-       bread INT DEFAULT 0, -- quantity of bread
-       carrot INT DEFAULT 0, -- quantity of carrot
-       diamond INT DEFAULT 0, -- quantity of diamond
+       item ENUM ('bread', 'carrot', 'diamond') NOT NULL,
+       quantity INT DEFAULT 0, -- quantity of bread
        player_id INT NOT NULL, -- owner of auction
        cur_state ENUM ('done', 'queued', 'running') NOT NULL DEFAULT 'queued', -- state of auction
        cur_bid_player_id INT, -- Player with current bid
        cur_bid_amount INT DEFAULT 0, -- Amount of current bid
+       minimum_bid INT DEFAULT 1, -- Minimum bid value
        FOREIGN KEY (player_id) REFERENCES Player(id), 
        FOREIGN KEY (cur_bid_player_id) REFERENCES Player(id)
 );

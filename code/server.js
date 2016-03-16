@@ -128,19 +128,34 @@ conn.connect(function(err) {
     /**
      * Auction API
      */
-    app.get('/api/v1/auction/:id', function(req, res, next) {
-	conn.query('SELECT * FROM Auction WHERE cur_state = ?', ['running'], function(err, rows) {
-	    if (err || !rows[0]) {
+    app.get('/api/v1/auction', function(req, res, next) {
+	conn.query('SELECT * FROM Auction WHERE cur_state = ?', ['running'], function(err, arows) {
+	    console.log(arows);
+	    console.log(err);
+	    if (err || !arows[0]) {
 		return next(err);
 	    }
-	    res.json({
-		id: 1,
-		bread: rows[0]['bread'],
-		carrot: rows[0]['carrot'],
-		diamond: rows[0]['diamond'],
-		cur_bid_player_id: rows[0]['cur_bid_player_id'],
-		cur_bid_amount: rows[0]['cur_bid_amount']
-	    });
+	    
+	    // Get highest bid player's name
+	    var cur_bid_player_id = arows[0]['cur_bid_player_id'];
+	    console.log(cur_bid_player_id);
+	    conn.query('SELECT * FROM Player WHERE id = ?', [cur_bid_player_id], function(err, prows) {
+		if (err || !prows[0]) {
+		    return next(err);
+		}
+		
+		// Find the item for auction
+		var item;
+		var quantity;
+		res.json({
+		    id: arows[0]['id'],
+		    item: arows[0]['item'],
+		    quantity: arows[0]['quantity'],
+		    cur_bid_player_id: cur_bid_player_id,
+		    cur_bid_player_name: prows[0]['name'],
+		    cur_bid_amount: arows[0]['cur_bid_amount']
+		});
+	    });	    
 	});
     });
 
