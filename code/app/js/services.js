@@ -4,22 +4,103 @@
 var services = angular.module('Services', ['ngResource']);
 
 // Player
-services.factory('Player', ['$resource', function($resource) {
-    return $resource('phone/:phoneId.json', {}, {
-	query: {method: 'GET', params: {phoneId: 'phones'}, isArray: true}
-    })
+services.factory('PlayerService', ['$resource', function($resource) {
+    return $resource('api/v1/player/:id', {}, {
+	query: {method: 'GET', params: {phoneId: 'phones'}, isArray: true},
+	isLoggedIn: {method: 'GET'}
+    });
 }]);
 
 // Inventory
-services.factory('Inventory', ['$resource', function($resource) {
-    return $resource('phone/:phoneId.json', {}, {
-	query: {method: 'GET', params: {phoneId: 'phones'}, isArray: true}
-    })
+services.factory('InventoryService', ['$resource', function($resource) {
+    return $resource('api/v1/inventory/:id', {}, {
+	get: {method: 'GET', params: {id: 'id'}, isArray: true}
+    });
 }]);
 
 // Auction
-services.factory('Auction', ['$resource', function($resource) {
-    return $resource('phone/:phoneId.json', {}, {
+services.factory('AuctionService', ['$resource', function($resource) {
+    return $resource('api/v1/auction/:id', {}, {
 	query: {method: 'GET', params: {phoneId: 'phones'}, isArray: true}
-    })
+    });
 }]);
+
+
+// Auth
+services.service('AuthService', ['$http', 'SessionService', function($http, SessionService) {
+    /**
+     * Checks if the user is logged in
+     * @returns boolean
+    */
+    this.isLoggedIn = function() {
+	return SessionService.getUser() !== null;
+    };
+
+    /**
+     * Logs a user in
+     * @returns {Promise}
+    */
+    this.login = function(name, cb) {
+	return $http.post('/api/v1/login', {name: name})
+		    .then(function(res) {
+			SessionService.setUser(res.data);
+			cb();
+	       });
+    };
+
+    /**
+     * Logs a user out
+     * @returns {Promise}
+     */
+    this.logout = function(cb) {
+	$http.get('/api/v1/logout')
+	     .then(function(res) {
+		 SessionService.clearSession();
+		 cb();
+	    });
+    };
+}]);
+
+// Session
+services.service('SessionService', ['$log', 'LocalStorage', function($log, LocalStorage) {
+
+    this._user = JSON.parse(LocalStorage.getItem('session.user'));
+
+    /**
+     * @returns {User}
+    */
+    this.getUser = function() {
+	return this._user;
+    };
+
+    /**
+     * Set user session in service and localStorage
+     * @returns {this}
+    */
+    this.setUser = function(user) {
+	if (!user || !user.id) {
+	    user = null;
+	}
+	this._user = user;
+	LocalStorage.setItem('session.user', JSON.stringify(user));	    
+	return this;
+    };
+
+    /**
+     * Clear users session
+    */
+    this.clearSession = function() {
+	this.setUser(null);
+    };    
+}]);
+
+// LocalStorage
+services.service('LocalStorage', ['$window', function($window) {
+    if ($window.localStorage) {
+	return $window.localStorage;
+    }
+    else {
+	throw new Error("LocalStorage not suppported on your browser");
+    }
+}]);
+

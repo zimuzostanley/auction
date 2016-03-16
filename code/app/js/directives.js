@@ -9,11 +9,10 @@ directives.directive('stats', function() {
 	restrict: 'E',
 	templateUrl: 'partials/stats.html',
 	scope: {
-	    player: '='
+	    player: '=',
+	    logout: '&'
 	},
-	controller: function($scope) {
-//	    $scope.player = {name: 'zim', coins: 60};
-	}
+	controller: 'StatCtrl'
     };
 });
 
@@ -22,7 +21,8 @@ directives.directive('stats', function() {
 directives.directive('inventory', function() {
     return {
 	restrict: 'E',
-	templateUrl: 'partials/inventory.html' // TODO.
+	templateUrl: 'partials/inventory.html', // TODO.
+	controller: 'InventoryCtrl'
     };
 });
 
@@ -34,9 +34,7 @@ directives.directive('auction', function() {
 	scope: {
 	    amount: '='
 	},
-	controller: function($scope) {
-	  //$scope.amount = 5;  
-	},
+	controller: 'AuctionCtrl',
 	link: function(scope, element, attr) {
 	    
 	}

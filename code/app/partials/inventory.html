@@ -2,10 +2,9 @@
     <h4>Inventory</h4>
     <ul>
 	<li ng-repeat="item in inventory">
-	    <span>{{item.name}}</span>
-	    <span>Quantity: </span>
-	    <span>{{item.quantity}}</span>
-	    <a href="/auction/{{item.id}}"></a>
+	    <span>{{item.name}}</span><a href="/auction/{{item.id}}">Auction</a>
+	    <br>
+	    <span>Quantity: {{item.quantity}}</span>
 	</li>
     </ul>
 </div>

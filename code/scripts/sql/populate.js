@@ -22,7 +22,6 @@ var create_inventory = function(num) {
 	    if (err) {
 		return console.log(err);
 	    }
-	    console.log(res);
 	});
     }
 };
@@ -36,12 +35,11 @@ var create_inventory = function(num) {
 var create_players = function(num) {
     console.log(i);
     for (var i = 1; i <= num; i++) {
-	var player = {email: 'zimuzostanley' + i + '@gmail.com', inventory_id: i, coins: 1000};
+	var player = {name: 'zim' + i, inventory_id: i, coins: 1000};
 	conn.query('INSERT INTO Player SET ?', player, function(err, res) {
 	    if (err) {
 		return console.log(err);
 	    }
-	    console.log(res);
 	});
     }
 }
@@ -58,34 +56,31 @@ var create_auctions = function(numq, numd) {
 	    if (err) {
 		return console.log(err);
 	    }
-	    console.log(res);
 	});
     }
 
     for (var i = 1; i < numd; i++) {
-	var auctiond = {bread: i, carrot: i + 1, diamond: 1 + 2, player_id: numq + i};
+	var auctiond = {bread: i, carrot: i + 1, diamond: 1 + 2, player_id: numq + i, cur_state: "done"};
 	conn.query('INSERT INTO Auction SET ?', auctiond, function(err, res) {
 	    if (err) {
 		return console.log(err);
 	    }
-	    console.log(res);
 	});
     }
 
 
-    var auctionr = {bread: 5, carrot: 6, diamond: 7, player_id: numq + numd};
+    var auctionr = {bread: 5, carrot: 6, diamond: 7, player_id: numq + numd, cur_state: "running"};
     conn.query('INSERT INTO Auction SET ?', auctionr, function(err, res) {
 	if (err) {
 	    return console.log(err);
 	}
-	console.log(res);
     });
 }
 
 var populate_db = function(num) {
     create_inventory(num);
     create_players(num);
-    create_auctions(num/2, num/2)
+    create_auctions(Math.floor(num/2), Math.floor((num - 1)/2));
 }
 
 conn.connect(function(err) {

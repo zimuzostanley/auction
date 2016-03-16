@@ -26,7 +26,7 @@ CREATE TABLE Inventory (
 -- Player
 CREATE TABLE Player (
        id INT PRIMARY KEY AUTO_INCREMENT,
-       email VARCHAR(255) UNIQUE,
+       name VARCHAR(255) UNIQUE,
        inventory_id INT NOT NULL,
        coins INT DEFAULT 1000,
        date DATETIME DEFAULT CURRENT_TIMESTAMP,
