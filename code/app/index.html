@@ -6,6 +6,7 @@
 	<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
 	<link rel="stylesheet" href="css/app.css">
 	<base href="/">
+	<script src="/socket.io/socket.io.js"></script>
 	<script src="bower_components/angular/angular.js"></script>
 	<script src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>
 	<script src="bower_components/angular-resource/angular-resource.js"></script>
@@ -15,6 +16,9 @@
 	<script src="js/app.js"></script>
     </head>
     <body>
+	<div class="page-header">
+	    <h3>Real time Multiplayer game auction platform</h3>
+	</div>
 	<div ui-view></div>
     </body>
 </html>

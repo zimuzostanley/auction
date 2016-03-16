@@ -7,6 +7,8 @@ var mysql = require('mysql');
 var compression = require('compression');
 var body_parser = require('body-parser');
 
+var Auction = require('./auction');
+
 
 var conn = mysql.createConnection({
     host: 'localhost' ,
@@ -22,7 +24,7 @@ conn.connect(function(err) {
     console.log('Db connection established');
 
 
-
+    // Middleware
     app.use(compression());
     app.use(express.static(__dirname + '/app'));
     app.use(body_parser.urlencoded({extended: true}));
@@ -89,17 +91,17 @@ conn.connect(function(err) {
 		var items = [
 		    {
 			id: irows[0]['id'],
-			name: 'bread',
+			name: 'Bread',
 			quantity: irows[0]['bread'],
 		    },
 		    {
 			id: irows[0]['id'],
-			name: 'carrot',
+			name: 'Carrot',
 			quantity: irows[0]['carrot'],
 		    },
 		    {
 			id: irows[0]['id'],
-			name: 'diamond',
+			name: 'Diamond',
 			quantity: irows[0]['diamond'],
 		    }
 		];
@@ -130,15 +132,12 @@ conn.connect(function(err) {
      */
     app.get('/api/v1/auction', function(req, res, next) {
 	conn.query('SELECT * FROM Auction WHERE cur_state = ?', ['running'], function(err, arows) {
-	    console.log(arows);
-	    console.log(err);
 	    if (err || !arows[0]) {
 		return next(err);
 	    }
 	    
 	    // Get highest bid player's name
 	    var cur_bid_player_id = arows[0]['cur_bid_player_id'];
-	    console.log(cur_bid_player_id);
 	    conn.query('SELECT * FROM Player WHERE id = ?', [cur_bid_player_id], function(err, prows) {
 		if (err || !prows[0]) {
 		    return next(err);
@@ -159,16 +158,55 @@ conn.connect(function(err) {
 	});
     });
 
-    // TODO. Handle error
+    app.put('/api/v1/auction/:id', function(req, res, next) {
+	var id = req.params.id;
+	console.log(id);
+	console.log(req.body);
+
+	if (_auction) {
+	    _auction.receive_bid(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, id);
+	}
+    });
+
+
     app.use(function(err, req, res, next) {
 	// TODO. More elaborate error handling
 	return res.json(err);
     });
 
-
-
+    // Start http server
     var port = 9000;
-    app.listen(port, function() {
+    server.listen(port, function() {
 	console.log('Http server listening on :' + port + '...');
     });
+
+
+    // Socket connection
+    io.on('connection', function(socket) {
+	io.emit('init', {will: 'be received by everyone'});
+
+	// fn('ack') to acknowledge receipt and send data along
+	socket.on('init', function(msg, fn) {
+	    console.log(msg);
+	});
+
+	socket.on('disconnect', function() {
+	    io.emit('user disconnected');
+	});
+    });
+
+    // Auction timing
+    var _auction;
+    var auction_timing = function() {
+	Auction.get_next_auction(conn, function(err, auction) {
+	    // TODO. Handle error properly. Serious problem if there is. Maybe, shutdown?
+	    if (err) {
+		return console.log(err);
+	    }
+	    else if (auction) {
+		_auction = new Auction(auction, setTimeout, auction_timing, conn);
+	    }
+	});	
+    }
+    auction_timing();
 });

@@ -1,10 +1,15 @@
-<div>
-    <h4>Inventory</h4>
-    <ul>
-	<li ng-repeat="item in inventory">
-	    <span>{{item.name}}</span><a href="/auction/{{item.id}}">Auction</a>
-	    <br>
-	    <span>Quantity: {{item.quantity}}</span>
-	</li>
-    </ul>
+<div class="panel panel-default">
+    <div class="panel-heading text-center">Inventory</div>
+    <div class="panel-body">
+	<ul class="list-group">
+	    <li class="list-group-item" ng-repeat="item in inventory">
+		<span class="badge">{{item.quantity}}</span>
+		<img ng-src="img/{{item.name}}.png" alt="{{item.name}}">
+		<div class="input-group">
+		    <input class="form-control" ng-model="quantity" placeholder="{{item.name}} quantity">
+		    <a class="input-group-addon" href="#/" ng-click="auction(item.id, quantity)">Auction</a>
+		</div>		
+	    </li>
+	</ul>
+    </div>
 </div>

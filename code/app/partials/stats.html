@@ -1,6 +1,13 @@
-<div>
-    <h4>Player stats</h4>
-    <span><a href="#/" ng-click="logout()">Logout</a></span>
-    <span>Name: {{player.name}}</span>
-    <span>Coins: {{player.coins}}</span>
+<div class="panel panel-default text-center">
+    <div class="panel-heading">Player stats  <a href="#/" ng-click="logout()">Logout</a></div>
+    <div class="panel-body">
+	<ul class="list-group">
+	    <li class="list-group-item">
+		<span><em>Name: </em> <strong>{{player.name}}</strong></span>		
+	    </li>
+	    <li class="list-group-item">
+		<span><em>Coins: </em> <strong>{{player.coins}}</strong></span>	
+	    </li>
+	</ul>
+    </div>
 </div>
