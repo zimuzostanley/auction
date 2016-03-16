@@ -131,7 +131,7 @@ conn.connect(function(err) {
      * Auction API
      */
     app.get('/api/v1/auction', function(req, res, next) {
-	conn.query('SELECT * FROM Auction WHERE cur_state = ?', ['running'], function(err, arows) {
+	conn.query('SELECT * FROM Auction WHERE cur_state = ? ORDER BY date ASC LIMIT 1 ', ['queued'], function(err, arows) {
 	    if (err || !arows[0]) {
 		return next(err);
 	    }

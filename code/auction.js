@@ -4,21 +4,11 @@
  * @params{Function} cb - callback with signature cb(err, auction), where auction is the promoted auction, null if none in queue
  */
 var get_next_auction = function(conn, cb) {
-    conn.query('SELECT * FROM Auction WHERE cur_state = ? ', ['running'], function(err, rows) {
+    conn.query('SELECT * FROM Auction WHERE cur_state = ? ORDER BY date ASC LIMIT 1 ', ['queued'], function(err, rows) {
 	if (err) {
 	    return cb(err);
 	}
-	if (rows[0]) {
-	    return cb(null, rows[0]);
-	}
-	else {
-	    conn.query('SELECT * FROM Auction WHERE cur_state = ? ', ['queued'], function(err, rows) {
-		if (err || !rows[0]) {
-		    return cb(err);
-		}
-		return cb(null, rows[0]);
-	    });
-	}
+	return cb(null, rows[0]);
     });
 };
 
@@ -77,10 +67,12 @@ Auction.prototype.receive_bid = function(conn, player_id, amount, id, cb) {
 };
 
 Auction.prototype.end_auction = function(conn, id, cb) {
+    // TODO. After auction ends, balance, accounts
     conn.query('UPDATE Auction SET cur_state = ? WHERE id = ?', ['done', id], function(err, rows) {
 	if (err || !rows[0] && cb) {
 	    return cb(err);
 	}
+	this.reconcile(id, bidder_id, owner_id);
 	if (cb) {
 	    return cb();   
 	}

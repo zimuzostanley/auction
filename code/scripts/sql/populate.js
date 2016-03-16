@@ -31,7 +31,6 @@ var create_inventory = function(num) {
  * 'id' PRIMARY KEY is auto incremented
  * @param{int} num - number of players to create
  */
-
 var create_players = function(num) {
     console.log(i);
     for (var i = 1; i <= num; i++) {
@@ -59,7 +58,7 @@ var create_auctions = function(numq, numd) {
 	});
     }
 
-    for (var i = 1; i < numd; i++) {
+    for (var i = 1; i <= numd; i++) {
 	var auctiond = {item: 'diamond', quantity: i, player_id: numq + i, cur_state: "done"};
 	conn.query('INSERT INTO Auction SET ?', auctiond, function(err, res) {
 	    if (err) {
@@ -67,21 +66,17 @@ var create_auctions = function(numq, numd) {
 	    }
 	});
     }
+};
 
-
-    var auctionr = {item: 'carrot', quantity: 37, player_id: numq + numd, cur_state: "running", cur_bid_player_id: 1};
-    conn.query('INSERT INTO Auction SET ?', auctionr, function(err, res) {
-	if (err) {
-	    return console.log(err);
-	}
-    });
-}
-
+/**
+ * Populate db with inventory, player and auction records
+ * @params{int} num - number of records
+*/
 var populate_db = function(num) {
     create_inventory(num);
     create_players(num);
-    create_auctions(Math.floor(num/2), Math.floor((num - 1)/2));
-}
+    create_auctions(Math.floor(num/2), Math.floor(num/2));
+};
 
 conn.connect(function(err) {
     if (err) {

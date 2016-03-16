@@ -40,10 +40,11 @@ CREATE TABLE Auction (
        time_remaining INT DEFAULT 80, -- time left before it enters the 10 second 'extra time'
        quantity INT DEFAULT 0, -- quantity of bread
        player_id INT NOT NULL, -- owner of auction
-       cur_state ENUM ('done', 'queued', 'running') NOT NULL DEFAULT 'queued', -- state of auction
+       cur_state ENUM ('done', 'queued') NOT NULL DEFAULT 'queued', -- state of auction
        cur_bid_player_id INT, -- Player with current bid
        cur_bid_amount INT DEFAULT 0, -- Amount of current bid
        minimum_bid INT DEFAULT 1, -- Minimum bid value
+       date DATETIME DEFAULT CURRENT_TIMESTAMP,	
        FOREIGN KEY (player_id) REFERENCES Player(id), 
        FOREIGN KEY (cur_bid_player_id) REFERENCES Player(id)
 );
