@@ -1,15 +1,16 @@
 var express = require('express');
 app = express();
 var server = require('http').Server(app);
-var io = require('socket.io')(server);
+var io = require('socket.io')(server); // Websocket connection
 var mysql = require('mysql');
 
 var compression = require('compression');
 var body_parser = require('body-parser');
 
-var Auction = require('./auction');
 
+var Auction = require('./auction'); // Auction class handles auction timing and event handling
 
+// MySQL connection
 var conn = mysql.createConnection({
     host: 'localhost' ,
     user: 'auction',
@@ -17,6 +18,7 @@ var conn = mysql.createConnection({
     database: 'auction'
 });
 
+// MySQL connection handler
 conn.connect(function(err) {
     if (err) {
 	return console.log('Error connecting to db');
@@ -48,10 +50,12 @@ conn.connect(function(err) {
 		}
 		// Else create a new player with inventory
 		else {
+		    // Create inventory
 		    conn.query('INSERT INTO Inventory SET ?', {bread: 30, carrot: 18, diamond: 1}, function(err, row) {
 			if (err || !row) {
 			    return next(err);
 			}
+			// Create player and add inventory id to player
 			conn.query('INSERT INTO Player SET ?', {name: name, inventory_id: row.insertId}, function(err, row) {
 			    if (err || !row) {
 				return next(err);
@@ -65,7 +69,7 @@ conn.connect(function(err) {
 	    });
 	}
 	else {
-	    res.json(null);
+	    return res.json(null);
 	}
     });
 
@@ -79,11 +83,12 @@ conn.connect(function(err) {
      */
     app.get('/api/v1/inventory/:id', function(req, res, next) {
 	var id = req.params.id;
-
+	// Find inventory_id of player
 	conn.query('SELECT * FROM Player WHERE id = ? ', [id], function(err, prows) {
 	    if (err || !prows[0]) {
-		return next(err);
+		return next(err || 'err');
 	    }
+	    // Get inventory
 	    conn.query('SELECT * FROM Inventory WHERE id = ? ', [prows[0]['inventory_id']], function(err, irows) {
 		if (err || !irows[0]) {
 		    return next(err);
@@ -117,7 +122,7 @@ conn.connect(function(err) {
 	var id = req.params.id;
 	conn.query('SELECT * FROM Player WHERE id = ?', [id], function(err, rows) {
 	    if (err || !rows[0]) {
-		return next(err);
+		return next(err || 'err');
 	    }
 	    res.json({
 		id: rows[0]['id'],
@@ -130,47 +135,61 @@ conn.connect(function(err) {
     /**
      * Auction API
      */
+    // GET called when the dashboard view is loaded, it gets the oldest 'queued' object
+    // or a descriptive object describing that there are no available auctions
     app.get('/api/v1/auction', function(req, res, next) {
 	conn.query('SELECT * FROM Auction WHERE cur_state = ? ORDER BY date ASC LIMIT 1 ', ['queued'], function(err, arows) {
 	    if (err || !arows[0]) {
-		return next(err);
+		return next(err || true);
 	    }
 	    
 	    // Get highest bid player's name
 	    var cur_bid_player_id = arows[0]['cur_bid_player_id'];
 	    conn.query('SELECT * FROM Player WHERE id = ?', [cur_bid_player_id], function(err, prows) {
-		if (err || !prows[0]) {
+		if (err) {
 		    return next(err);
 		}
-		
+		if (prows[0]) {
+		    var name = prows[0]['name'];
+		}
 		// Find the item for auction
 		var item;
 		var quantity;
-		res.json({
-		    id: arows[0]['id'],
-		    item: arows[0]['item'],
-		    quantity: arows[0]['quantity'],
-		    cur_bid_player_id: cur_bid_player_id,
-		    cur_bid_player_name: prows[0]['name'],
-		    cur_bid_amount: arows[0]['cur_bid_amount']
-		});
+		if (_auction) {
+		    return res.json({
+			id: arows[0]['id'],
+			item: arows[0]['item'],
+			quantity: arows[0]['quantity'],
+			player_id: arows[0]['player_id'],
+			time_remaining: _auction.time - 1, // Subtract 1 for network latency
+			cur_bid_player_id: cur_bid_player_id,
+			cur_bid_player_name: name || 'No bid yet',
+			cur_bid_amount: arows[0]['cur_bid_amount']
+		    });
+		}
+		else {
+		    return res.json(null);
+		}
 	    });	    
 	});
     });
-
+    
+    // PUT called when a bid is received for an available auction,
+    // req.params.id is the auction id
     app.put('/api/v1/auction/:id', function(req, res, next) {
 	var id = req.params.id;
 	console.log(id);
 	console.log(req.body);
 
 	if (_auction) {
-	    _auction.receive_bid(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, id);
+	    _auction.receive_bid(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, io);
 	}
+	res.json(null);
     });
 
-
+    // TODO. More elaborate error handling
     app.use(function(err, req, res, next) {
-	// TODO. More elaborate error handling
+	
 	return res.json(err);
     });
 
@@ -183,30 +202,54 @@ conn.connect(function(err) {
 
     // Socket connection
     io.on('connection', function(socket) {
-	io.emit('init', {will: 'be received by everyone'});
-
 	// fn('ack') to acknowledge receipt and send data along
-	socket.on('init', function(msg, fn) {
+	socket.on('login', function(msg, fn) {
+	    socket.broadcast.emit('user:login', {id: msg.id});
 	    console.log(msg);
 	});
 
+	socket.on('dashboard', function(msg, fn) {
+	    if (_auction) {
+		socket.emit('auction:start');	
+	    }
+	});
+
 	socket.on('disconnect', function() {
-	    io.emit('user disconnected');
+	    //io.emit('user disconnected');
 	});
     });
 
-    // Auction timing
+    // Auction timing global
     var _auction;
-    var auction_timing = function() {
-	Auction.get_next_auction(conn, function(err, auction) {
-	    // TODO. Handle error properly. Serious problem if there is. Maybe, shutdown?
-	    if (err) {
-		return console.log(err);
-	    }
-	    else if (auction) {
-		_auction = new Auction(auction, setTimeout, auction_timing, conn);
-	    }
-	});	
+
+    // TODO. Inject all dependencies and return _auction as an object in a callback
+    /**
+     * Auction 'event loop'. Is started when the server starts and keeps running as long as...
+     * there's a 'queued' auction in the database. It also resumes when a new auction is created
+     * @params{Function} timer - timer object, most likely setTimeout
+     * @params{int} delay - time in seconds between when an auction ends and a new one starts
+    */
+    var auction_timing = function(io, interval, timeout, clear_interval, delay) {
+	if (_auction) {
+	    clear_interval(_auction.timer);
+	    _auction = null;
+	    io.emit('auction:end'); // Auction has ended
+	    console.log('auction end');
+	}
+	timeout(function() {
+	    Auction.get_next_auction(conn, function(err, auction) {
+		// TODO. Handle error properly. Serious problem if there is. Maybe, shutdown?
+		if (err) {
+		    return console.log(err);
+		}
+		else if (auction) {
+		    _auction = new Auction(auction, interval, auction_timing.bind(this, io, interval, timeout, clear_interval, delay), conn);
+		    io.emit('auction:start');
+		    console.log('auction start');
+		}
+	    });	
+	}, delay * 1000);
     }
-    auction_timing();
+    var delay = 10; // Time lapse before a new auction is elected
+    auction_timing(io, setInterval, setTimeout, clearInterval, delay); 
 });

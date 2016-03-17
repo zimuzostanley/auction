@@ -21,7 +21,8 @@ services.factory('InventoryService', ['$resource', function($resource) {
 // Auction
 services.factory('AuctionService', ['$resource', function($resource) {
     return $resource('api/v1/auction/:id', {}, {
-	update: {method: 'PUT'}
+	update: {method: 'PUT'},
+	update: {method: 'POST', params: {item: 'id', quantity: 'quantity', 'player_id': 'player_id', 'cur_state'}}
     });
 }]);
 
@@ -74,7 +75,7 @@ services.service('SessionService', ['$log', 'LocalStorage', function($log, Local
     };
 
     /**
-     * Set user session in service and localStorage
+     * Set user's session in service and localStorage
      * @returns {this}
      */
     this.setUser = function(user) {
@@ -87,7 +88,7 @@ services.service('SessionService', ['$log', 'LocalStorage', function($log, Local
     };
 
     /**
-     * Clear users session
+     * Clear user's session from service and localStorage
      */
     this.clearSession = function() {
 	this.setUser(null);

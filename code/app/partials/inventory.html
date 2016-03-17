@@ -7,7 +7,7 @@
 		<img ng-src="img/{{item.name}}.png" alt="{{item.name}}">
 		<div class="input-group">
 		    <input class="form-control" ng-model="quantity" placeholder="{{item.name}} quantity">
-		    <a class="input-group-addon" href="#/" ng-click="auction(item.id, quantity)">Auction</a>
+		    <a class="input-group-addon" href="#/" ng-click="auction(item.id, item.name, item.quantity)">Auction</a>
 		</div>		
 	    </li>
 	</ul>

@@ -37,7 +37,7 @@ CREATE TABLE Player (
 CREATE TABLE Auction (
        id INT PRIMARY KEY AUTO_INCREMENT,
        item ENUM ('Bread', 'Carrot', 'Diamond') NOT NULL,
-       time_remaining INT DEFAULT 80, -- time left before it enters the 10 second 'extra time'
+       time_remaining INT DEFAULT 11, -- time left before it enters the 10 second 'extra time'
        quantity INT DEFAULT 0, -- quantity of bread
        player_id INT NOT NULL, -- owner of auction
        cur_state ENUM ('done', 'queued') NOT NULL DEFAULT 'queued', -- state of auction

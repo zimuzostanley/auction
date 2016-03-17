@@ -32,7 +32,8 @@ directives.directive('auction', function() {
 	restrict: 'E',
 	templateUrl: 'partials/auction.html', // TODO.
 	scope: {
-	    amount: '='
+	    amount: '=',
+	    auction: '='
 	},
 	controller: 'AuctionCtrl',
 	link: function(scope, element, attr) {

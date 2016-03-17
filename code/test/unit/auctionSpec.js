@@ -4,17 +4,20 @@ var sinon = require('sinon');
 var Auction = require('../../auction');
 
 describe('Auction', function() {
-    describe('Constructor', function() {
-	var mock = {
-	    timer: '',
-	    auction: '',
-	    listener: ''
-	};
+    var mock = {
+	timer: '', // Function Will be mocked before use
+	auction: {
+	    id: 1,
+	    item: 'bread',
+	    quantity: 4,
+	    cur_bid_player_id: 2,
+	    cur_bid_player_name: '',
+	    cur_bid_amount: arows[0]['cur_bid_amount']
+	},
+	listener: '' // Function will be mocked before use
+    };
 
-	var end = function() {
-	    
-	}
-	
+    describe('Constructor', function() {
 	before(function() {
 	    mock.timer = function(cb, time) {
 		cb();
@@ -31,6 +34,18 @@ describe('Auction', function() {
 	    console.log(stub.callCount);
 	    should(stub).be.calledOnce;
 	    should(mock.listener).be.calledOnce;
+	});
+    });
+
+    describe('Instance methods', function() {
+	var auction_object;
+	
+	beforeEach(function() {
+	    auction_object = new Auction(mock.auction, mock.timer, mock.listener);
+	});
+	
+	it('should reconcile after auction ends', function() {
+	    
 	});
     });
 });

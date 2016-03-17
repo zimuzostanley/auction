@@ -1,7 +1,7 @@
 <div class="panel panel-default text-center">
     <div class="panel-heading">Current auction</div>
     <div class="panel-body">
-	<ul class="list-group">
+	<ul class="list-group" ng-show="auction.item">
 	    <li class="list-group-item">
 		<span><em>Seller: </em></span> <span><strong>{{auction.cur_bid_player_name}}</strong></span>		
 	    </li>
@@ -9,7 +9,7 @@
 		<span><em>{{auction.item}}: </em></span> <span><strong>{{auction.quantity}}</strong></span>
 	    </li>
 	    <li class="list-group-item">
-		<span><em>Time left: </em></span> <span><strong>90 s</strong></span>
+		<span><em>Time left: </em></span> <span><strong>{{auction.time_remaining}} s</strong></span>
 	    </li>
 	    <li class="list-group-item">
 		<span><em>Winning bid: </em></span> <span><strong>{{auction.cur_bid_amount}}</strong></span>
@@ -21,5 +21,8 @@
 		</div>
 	    </li>
 	</ul>
+	<p ng-hide="auction.item">
+	    No auction available
+	</p>
     </div>
 </div>
