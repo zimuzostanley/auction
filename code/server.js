@@ -46,7 +46,7 @@ conn.connect(function(err) {
 		if (rows[0]) {
 		    res.json({
 			id: rows[0]['id'],
-		    });   
+		    });
 		}
 		// Else create a new player with inventory
 		else {
@@ -62,7 +62,7 @@ conn.connect(function(err) {
 			    }
 			    res.json({
 				id: row.insertId,
-			    });		
+			    });
 			});
 		    });
 		}
@@ -142,7 +142,7 @@ conn.connect(function(err) {
 	    if (err || !arows[0]) {
 		return next(err || true);
 	    }
-	    
+
 	    // Get highest bid player's name
 	    var cur_bid_player_id = arows[0]['cur_bid_player_id'];
 	    conn.query('SELECT * FROM Player WHERE id = ?', [cur_bid_player_id], function(err, prows) {
@@ -161,7 +161,7 @@ conn.connect(function(err) {
 			item: arows[0]['item'],
 			quantity: arows[0]['quantity'],
 			player_id: arows[0]['player_id'],
-			time_remaining: _auction.time - 1, // Subtract 1 for network latency
+			time_remaining: _auction.time + 1, // Add 1 for network latency
 			cur_bid_player_id: cur_bid_player_id,
 			cur_bid_player_name: name || 'No bid yet',
 			cur_bid_amount: arows[0]['cur_bid_amount']
@@ -170,10 +170,10 @@ conn.connect(function(err) {
 		else {
 		    return res.json(null);
 		}
-	    });	    
+	    });
 	});
     });
-    
+
     // PUT called when a bid is received for an available auction,
     // req.params.id is the auction id
     app.put('/api/v1/auction/:id', function(req, res, next) {
@@ -182,14 +182,26 @@ conn.connect(function(err) {
 	console.log(req.body);
 
 	if (_auction) {
-	    _auction.receive_bid(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, io);
+	    _auction.receive_bid(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, function() {
+		io.emit('auction:reload');
+	    });
 	}
 	res.json(null);
     });
 
+    app.post('/api/v1/auction', function(req, res, next) {
+	conn.query('INSERT INTO Auction SET ?', {item: req.body.item, quantity: req.body.quantity, player_id: req.body.player_id, cur_state: req.body.cur_state}, function(err, row) {
+	    if (err || !row) {
+		return next(err);
+	    }
+	    auction_timing(setInterval, setTimeout, clearInterval, _auction_delay, 0, false);
+	    res.json(null);
+	});
+    });
+
     // TODO. More elaborate error handling
     app.use(function(err, req, res, next) {
-	
+
 	return res.json(err);
     });
 
@@ -210,17 +222,20 @@ conn.connect(function(err) {
 
 	socket.on('dashboard', function(msg, fn) {
 	    if (_auction) {
-		socket.emit('auction:start');	
+		socket.emit('auction:reload');
 	    }
 	});
 
 	socket.on('disconnect', function() {
-	    //io.emit('user disconnected');
+	    console.log('disconnect');
+	    socket.disconnect();
 	});
     });
 
     // Auction timing global
     var _auction;
+    var _auction_delay = 1;
+    var _auction_on;
 
     // TODO. Inject all dependencies and return _auction as an object in a callback
     /**
@@ -228,28 +243,34 @@ conn.connect(function(err) {
      * there's a 'queued' auction in the database. It also resumes when a new auction is created
      * @params{Function} timer - timer object, most likely setTimeout
      * @params{int} delay - time in seconds between when an auction ends and a new one starts
-    */
-    var auction_timing = function(io, interval, timeout, clear_interval, delay) {
-	if (_auction) {
+     */
+    var auction_timing = function(interval, timeout, clear_interval, delay, now, immediate) {
+	if (!immediate && _auction_on) {
+	    return;
+	}
+	if (_auction && immediate) {
 	    clear_interval(_auction.timer);
 	    _auction = null;
 	    io.emit('auction:end'); // Auction has ended
 	    console.log('auction end');
 	}
+
 	timeout(function() {
 	    Auction.get_next_auction(conn, function(err, auction) {
 		// TODO. Handle error properly. Serious problem if there is. Maybe, shutdown?
 		if (err) {
+		    _auction_on = false;
 		    return console.log(err);
 		}
 		else if (auction) {
-		    _auction = new Auction(auction, interval, auction_timing.bind(this, io, interval, timeout, clear_interval, delay), conn);
+		    _auction_on = true;
+		    _auction = new Auction(auction, interval, auction_timing.bind(this, interval, timeout, clear_interval, delay, delay, true), conn);
 		    io.emit('auction:start');
 		    console.log('auction start');
 		}
-	    });	
-	}, delay * 1000);
+	    });
+	}, now * 1000);
+
     }
-    var delay = 10; // Time lapse before a new auction is elected
-    auction_timing(io, setInterval, setTimeout, clearInterval, delay); 
+    auction_timing(setInterval, setTimeout, clearInterval, _auction_delay, 0, true);
 });

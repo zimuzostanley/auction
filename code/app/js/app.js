@@ -29,18 +29,17 @@ app.run(['$rootScope', '$state', '$stateParams', 'AuthService', function($rootSc
     $rootScope.$state = $state;
     $rootScope.$stateParams = $stateParams;
 
-    $rootScope.$on('$routeChangeStart', function (event, nextRoute, currentRoute) {
-	if (!AuthService.isLoggedIn()) {
-	    $state.go('login');
-	    console.log("Route log prevent");
-	    event.preventDefault();
-	}
-    });
+    /* $rootScope.$on('$routeChangeStart', function (event, nextRoute, currentRoute) {
+       if (!AuthService.isLoggedIn()) {
+       $state.go('login');
+       console.log("Route log prevent");
+       event.preventDefault();
+       }
+       }); */
 
     $rootScope.$on('$locationChangeStart', function(event, newUrl, oldUrl) {
-	if (!AuthService.isLoggedIn()) {
+	if (!AuthService.isLoggedIn() && newUrl.split('#')[1] !== '/login') {
 	    $state.go('login');
-	    console.log("Location log prevent");
 	    event.preventDefault();
 	}	
     });

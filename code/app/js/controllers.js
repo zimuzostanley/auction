@@ -13,21 +13,20 @@ controllers.controller('StatCtrl', ['$scope', 'PlayerService', 'SessionService',
 }]);
 
 // Inventory controller
-controllers.controller('InventoryCtrl', ['$scope', 'InventoryService', 'SessionService', 'AuctionService', function($scope, InventoryService, SessionService, AuthService) {
+controllers.controller('InventoryCtrl', ['$scope', 'InventoryService', 'SessionService', 'AuctionService', function($scope, InventoryService, SessionService, AuctionService) {
     // Inventory of logged in user
     $scope.inventory = InventoryService.get({id: SessionService.getUser().id}, function(inventory) {
 
     });
-    
-    $scope.auction = function(inventory_id, item, quantity) {
+
+    $scope.place_auction = function(inventory_id, item, quantity) {
 	var id = SessionService.getUser().id;
 	var auction = AuctionService.save({item: item, quantity: quantity, player_id: id, cur_state: "queued"});
-	auction.$save();
-    }
+    };
 }]);
 
 // Auction controller
-controllers.controller('AuctionCtrl', ['$scope', '$interval', 'AuctionService', 'SessionService', 'PlayerService', function($scope, $interval, AuctionService, SessionService, PlayerService) {
+controllers.controller('AuctionCtrl', ['$scope', 'AuctionService', 'SessionService', 'PlayerService', function($scope, AuctionService, SessionService, PlayerService) {
     // Current auction
     $scope.auction = AuctionService.get({}, function(auction) {
 
@@ -60,6 +59,7 @@ controllers.controller('LoginCtrl', ['$scope', 'AuthService', 'SessionService', 
     $scope.login = function(name) {
 	AuthService.login(name, function() {
 	    var player_id = SessionService.getUser().id
+	    console.log("Socket login");
 	    SocketService.emit('login', {id: player_id});
 	    SocketService.on('user:login', function(data) {
 		if (data.id == player_id) {
@@ -84,52 +84,55 @@ controllers.controller('LoginCtrl', ['$scope', 'AuthService', 'SessionService', 
 // Dashboard controller
 controllers.controller('DashboardCtrl', ['$scope', '$interval', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $interval, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
     $scope.logout = function() {
-	console.log('AuthService logout');
+	SocketService.emit('disconnect', function() {
+	});
+	console.log('disconnect');
 	AuthService.logout(function() {
 	    $scope.$state.go('login');
-	});
+	});	    
+
     };
+    // Let the server know we just got to the dashboard so it can send a signal for us to refresh the page
     SocketService.emit('dashboard');
-    var timer;
+    console.log('Dashboard');
+    
     /**
      * Reload API resources
      * @params{object} old_timer - cancels old timer to prevent any leaks or corruption (may not be necessary)
-     * @params{boolean} start - restarts the timer if true
+     * @params{boolean} start - resets the timer if true
      */
-    var reload = function(old_timer, start) {
-	if (old_timer) {
-	    $interval.cancel(old_timer);
+    var reload = function(reset) {
+	if ($scope.timer) {
+	    $interval.cancel($scope.timer);
 	}
 	var id = SessionService.getUser().id;
-	var timer;
 	$scope.player = PlayerService.get({id: id});
 	$scope.inventory = InventoryService.get({id: id});
 	$scope.auction = AuctionService.get({}, function(auction) {
-	    if (start) {
-		timer = $interval(function() {
+	    if (reset) {
+
+		$scope.timer = $interval(function() {
 		    if (--$scope.auction.time_remaining <= 0) {
 			$scope.auction.time_remaining = 0;
-			$interval.cancel(timer);
+			$interval.cancel($scope.timer);
 		    }
 		}, 1000);
+		//console.log(timer);
 	    }
 	});
-	return timer;
-    }
-
+    };
 
     SocketService.on('auction:start', function(data) {
-	// Reload all models
 	console.log("Auction start");
-	timer = reload(timer, true);
+	reload(true);
     });
     SocketService.on('auction:end', function(data) {
-	// Reload all models
+//	reload(false);
 	console.log("Auction end");
-	timer = reload(timer, false);
     });
     SocketService.on('auction:reload', function(data) {
 	// Reload auction model
-	$scope.auction = AuctionService.get();
+	console.log("Auction reload");
+//	reload(true);
     });
 }]);

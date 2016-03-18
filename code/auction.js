@@ -5,8 +5,8 @@
  */
 var get_next_auction = function(conn, cb) {
     conn.query('SELECT * FROM Auction WHERE cur_state = ? ORDER BY date ASC LIMIT 1 ', ['queued'], function(err, rows) {
-	if (err) {
-	    return cb(err);
+	if (err || !rows[0]) {
+	    return cb(err || 'empty');
 	}
 	return cb(null, rows[0]);
     });
@@ -14,7 +14,7 @@ var get_next_auction = function(conn, cb) {
 
 
 var Auction = function(auction, timer, listener, conn) {
-    this.time = auction.time_remaining;
+    this.time = auction.time_remaining - 1; // Subtract 1 for network latency
     this.auction = auction;
     this.listener = listener; // listen for when auction ends
     var self = this;
@@ -23,7 +23,6 @@ var Auction = function(auction, timer, listener, conn) {
 	console.log(self.time);
 	if (--self.time <= 0) {
 	    self.end_auction(conn, function() {
-		console.log('Auction object: ended');
 		return self.listener(); // Auction has ended
 	    });
 	}
@@ -40,7 +39,7 @@ Auction.get_next_auction = get_next_auction;
  * @params{int} player_id - player id of new bid
  * @params{int} amount - new value of bid
  */
-Auction.prototype.receive_bid = function(conn, player_id, amount, io, cb) {
+Auction.prototype.receive_bid = function(conn, player_id, amount, cb) {
     if (this.time < 10) {
 	this.time += 10;
     }
@@ -48,6 +47,7 @@ Auction.prototype.receive_bid = function(conn, player_id, amount, io, cb) {
     if (amount > this.auction.cur_bid_amount) {
 	this.auction.cur_bid_amount = amount;
 	this.auction.cur_bid_player_id = player_id;
+	var id = this.auction.id;
 	conn.query('SELECT * FROM Player WHERE id = ? ', [player_id], function(err, rows) {
 	    if ((err || !rows[0]) && cb) {
 		return cb(err);
@@ -55,12 +55,11 @@ Auction.prototype.receive_bid = function(conn, player_id, amount, io, cb) {
 	    if (rows[0]['coins'] < amount) {
 		return cb(new Error('Insufficient funds'));
 	    }
-	    conn.query('UPDATE Auction SET cur_bid_player_id = ? , cur_bid_amount = ? WHERE id = ?', [player_id, amount, this.auction.id], function(err, rows) {
+	    conn.query('UPDATE Auction SET cur_bid_player_id = ? , cur_bid_amount = ? WHERE id = ?', [player_id, amount, id], function(err, rows) {
 		if ((err || !rows[0]) && cb) {
 		    return cb(err);
 		}
 		if (cb) {
-		    io.emit('auction:reload');
 		    return cb();
 		}
 	    });
@@ -69,12 +68,18 @@ Auction.prototype.receive_bid = function(conn, player_id, amount, io, cb) {
 };
 
 Auction.prototype.end_auction = function(conn, cb) {
+    var self = this;
     // TODO. After auction ends, balance, accounts
     conn.query('UPDATE Auction SET cur_state = ? WHERE id = ?', ['done', this.auction.id], function(err, rows) {
-	if ((err || !rows[0]) && cb) {
-	    return cb(err);
+	if (err || !rows) {
+	    if (cb) {
+		cb(err);
+	    }
+	    return;
 	}
-	this.reconcile(conn);
+	self.reconcile(conn, function(err) {
+	    console.log(err);
+	});
 	if (cb) {
 	    return cb();
 	}
@@ -83,25 +88,56 @@ Auction.prototype.end_auction = function(conn, cb) {
 
 Auction.prototype.reconcile = function(conn, cb) {
     var auction = this.auction;
-    if (auction.cur_bid_amount > 0) {
-	var sql_update = [auction.cur_bid_amount, auction.item, auction.quantity];
-	// For bidder: Subtract coins but add to inventory
-	conn.query('UPDATE Player SET coins = coins - ? , ? = ? + ? WHERE id = ?',  sql_update.concat(auction.cur_bid_player_id), function(err, rows) {
-	    if (err || !rows[0] && cb) {
-		return cb(err);
+    var item = auction.item.toLowerCase();
+
+    // For bidder: Subtract coins but add to inventory
+    // Update Player
+    conn.query('UPDATE Player SET coins = coins - ? WHERE id = ?', [auction.cur_bid_amount, auction.cur_bid_player_id], function(err, rows) {
+	if (err || !rows) {
+	    cb(err);
+	    return;
+	}
+	// Get inventory_id
+	conn.query('SELECT * FROM Player WHERE id = ?', [auction.cur_bid_player_id], function(err, rows) {
+	    if (err || !rows[0]) {
+		cb(err);
+		return;
 	    }
-	    // For Auctioner: Add coins but subtract from inventory
-	    conn.query('UPDATE Player SET coins = coins + ? , ? = ? - ? WHERE id = ?', sql_update.concat(auction.player_id), function(err, rows) {
-		if ((err || !rows[0]) && cb) {
-		    return cb(err);
+	    // Update Inventory
+	    conn.query('UPDATE Inventory SET ' + item + ' = ' + item + ' + ? ' + 'WHERE id = ?', [auction.quantity, rows[0]['inventory_id']], function(err, rows) {
+		if (err || !rows) {
+		    cb(err);
+		    return;
 		}
-		if (cb) {
-		    return cb();
-		}
+
+		/** -- Terrible nesting -- */
+
+		// For auctioner: Add coins but subtract from inventory
+		// Update Player
+		conn.query('UPDATE Player SET coins = coins + ? WHERE id = ?', [auction.cur_bid_amount, auction.player_id], function(err, rows) {
+		    if (err || !rows) {
+			cb(err);
+			return;
+		    }
+		    // Get inventory_id
+		    conn.query('SELECT * FROM Player WHERE id = ?', [auction.player_id], function(err, rows) {
+			if (err || !rows[0]) {
+			    cb(err);
+			    return;
+			}
+			// Update Inventory
+			conn.query('UPDATE Inventory SET ' + item + ' = ' + item + ' - ? ' + 'WHERE id = ?', [auction.quantity, rows[0]['inventory_id']], function(err, rows) {
+			    if (err || !rows) {
+				cb(err);
+				return;
+			    }
+			    return cb();
+			});
+		    });
+		});
+		/** -- Terrible nesting -- */
 	    });
 	});
-    }
-}
-
-
+    });
+};
 module.exports = Auction;

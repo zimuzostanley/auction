@@ -22,8 +22,8 @@ services.factory('InventoryService', ['$resource', function($resource) {
 services.factory('AuctionService', ['$resource', function($resource) {
     return $resource('api/v1/auction/:id', {}, {
 	update: {method: 'PUT'},
-	update: {method: 'POST', params: {item: 'id', quantity: 'quantity', 'player_id': 'player_id', 'cur_state'}}
-    });
+	save: {method: 'POST', params: {item: 'id', quantity: 'quantity', 'player_id': 'player_id', 'cur_state': 'queued'}}}
+    );
 }]);
 
 
@@ -124,7 +124,7 @@ services.factory('SocketService', ['$rootScope', function($rootScope) {
 		$rootScope.$apply(function() {
 		    if(cb) {
 			cb.apply(socket, args);
-		   } 
+		    }
 		});
 	    });
 	}

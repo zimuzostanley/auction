@@ -17,12 +17,12 @@
 	    <li class="list-group-item">
 		<div class="input-group">
 		    <input class="form-control" ng-model="amount" placeholder="Bid amount">
-		    <a class="input-group-addon" href="#/" ng-click="bid(amount, auction)">Place bid</a>
+		    <a class="input-group-addon" href ng-click="bid(amount, auction)">Place bid</a>
 		</div>
 	    </li>
 	</ul>
 	<p ng-hide="auction.item">
-	    No auction available
+	    No auction at the moment
 	</p>
     </div>
 </div>

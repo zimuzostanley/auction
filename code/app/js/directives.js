@@ -21,7 +21,7 @@ directives.directive('stats', function() {
 directives.directive('inventory', function() {
     return {
 	restrict: 'E',
-	templateUrl: 'partials/inventory.html', // TODO.
+	templateUrl: 'partials/inventory.html',
 	controller: 'InventoryCtrl'
     };
 });
@@ -30,7 +30,7 @@ directives.directive('inventory', function() {
 directives.directive('auction', function() {
     return {
 	restrict: 'E',
-	templateUrl: 'partials/auction.html', // TODO.
+	templateUrl: 'partials/auction.html',
 	scope: {
 	    amount: '=',
 	    auction: '='
