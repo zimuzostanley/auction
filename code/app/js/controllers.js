@@ -23,7 +23,6 @@ controllers.controller('InventoryCtrl', ['$scope', '$window', 'InventoryService'
 	var id = SessionService.getUser().id;
 	var auction = AuctionService.save({item: item, quantity: quantity, player_id: id, cur_state: "queued"});
 	$window.alert('Your auction has been queued.');
-
     };
 
     $scope.sufficient_inventory = function(mine, bid) {

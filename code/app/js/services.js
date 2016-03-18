@@ -6,7 +6,6 @@ var services = angular.module('Services', ['ngResource']);
 // Player
 services.factory('PlayerService', ['$resource', function($resource) {
     return $resource('api/v1/player/:id', {}, {
-	update: {method: 'PUT'}
     });
 }]);
 
@@ -14,7 +13,6 @@ services.factory('PlayerService', ['$resource', function($resource) {
 services.factory('InventoryService', ['$resource', function($resource) {
     return $resource('api/v1/inventory/:id', {}, {
 	get: {method: 'GET', params: {id: 'id'}, isArray: true},
-	update: {method: 'PUT'}
     });
 }]);
 

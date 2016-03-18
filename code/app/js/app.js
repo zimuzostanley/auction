@@ -2,7 +2,7 @@
 
 /* App Module */
 var app = angular.module('AuctionApp', [
-    'ngResource',
+//    'ngResource',
     'ui.router',
     'Services',
     'Controllers',
