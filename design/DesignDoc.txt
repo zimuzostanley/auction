@@ -1,0 +1,13 @@
+Design Document for a Realtime auctioning platform
+
+PURPOSE
+---------
+
+This project is a critical feature in a multiplayer game platform. It enables players place game tokens (bread, carrots or diamonds) up for auctioning.
+Other players can bid for these tokens, after a time duration when no player has bidded, the auction ends and the tokens go to the highest bidder while the
+coins used in purchasing are deducted from his/her account. The auctioner's inventory and coins also reflect the appropriate changes.
+
+HIGH LEVEL ENTITIES
+--------------------
+
+The database schema consists of 3 tables

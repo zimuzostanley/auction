@@ -18,19 +18,20 @@ controllers.controller('InventoryCtrl', ['$scope', 'InventoryService', 'SessionS
     $scope.inventory = InventoryService.get({id: SessionService.getUser().id}, function(inventory) {
 
     });
-
     $scope.place_auction = function(inventory_id, item, quantity) {
+	$scope.quantity = undefined;
+	console.log($scope.quantity);
 	var id = SessionService.getUser().id;
 	var auction = AuctionService.save({item: item, quantity: quantity, player_id: id, cur_state: "queued"});
+
     };
 
-    $scope.sufficient = function(mine, bid) {
+    $scope.sufficient_inventory = function(mine, bid) {
 	if (!bid) {
 	    return true;
 	}
 	if (mine >= bid) {
-	    $scope.quantity = undefined;
-	    return false;	    
+	    return false;
 	}
 	return true;
     }
@@ -49,6 +50,7 @@ controllers.controller('AuctionCtrl', ['$scope', 'AuctionService', 'SessionServi
      * @params{object} auction - current auction object
      */
     $scope.bid = function(value, auction) {
+	$scope.amount = undefined;
 	var cur_player_id = SessionService.getUser().id;
 	PlayerService.get({id: cur_player_id}, function(player) {
 	    if (player.coins > value) {
@@ -64,21 +66,19 @@ controllers.controller('AuctionCtrl', ['$scope', 'AuctionService', 'SessionServi
 	});
     };
 
-    $scope.sufficient = function(highest, cur) {
+    $scope.sufficient_auction = function(highest, cur) {
 	if (!cur) {
 	    return true;
 	}
 	if (highest < cur) {
-//	    $scope.amount = undefined;
 	    return false;
 	}
 	return true;
-    }
-
+    };
 }]);
 
 // Login controller
-controllers.controller('LoginCtrl', ['$scope', 'AuthService', 'SessionService', 'SocketService', function($scope, AuthService, SessionService, SocketService) {
+controllers.controller('LoginCtrl', ['$scope', '$state', '$stateParams', 'AuthService', 'SessionService', 'SocketService', function($scope, $state, $stateParams, AuthService, SessionService, SocketService) {
     $scope.login = function(name) {
 	AuthService.login(name, function() {
 	    var player_id = SessionService.getUser().id
@@ -89,42 +89,44 @@ controllers.controller('LoginCtrl', ['$scope', 'AuthService', 'SessionService', 
 		    // If client receives a login from another client with same id
 		    // logout this client
 		    AuthService.logout(function() {
-			$scope.$state.go('login');
+			$state.go('login');
 		    });
 		}
 		console.log(data);
 	    });
-	    $scope.$state.go('dashboard');
+	    $state.go('dashboard', {login: true});
 	});
     };
 
     // Prevent visit if already logged in
     if (AuthService.isLoggedIn()) {
-//	$scope.$state.go('dashboard');
+	//	$scope.$state.go('dashboard');
     }
 }]);
 
 // Dashboard controller
-controllers.controller('DashboardCtrl', ['$scope', '$interval', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $interval, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
+controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$interval', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $state, $stateParams, $interval, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
     $scope.logout = function() {
 	SocketService.emit('disconnect', function() {
 	});
 	console.log('disconnect');
 	AuthService.logout(function() {
-	    $scope.$state.go('login');
-	});	    
+	    $state.go('login');
+	});
 
     };
     // Let the server know we just got to the dashboard so it can send a signal for us to refresh the page
-    SocketService.emit('dashboard');
-    console.log('Dashboard');
-    
+    if (!$stateParams.login) {
+	console.log('dash');
+	SocketService.emit('dashboard');
+    }
+
     /**
      * Reload API resources
      * @params{object} old_timer - cancels old timer to prevent any leaks or corruption (may not be necessary)
      * @params{boolean} start - resets the timer if true
      */
-    var reload = function(reset) {
+    var reload = function(player, inventory, auction) {
 	if ($scope.timer) {
 	    $interval.cancel($scope.timer);
 	}
@@ -132,33 +134,35 @@ controllers.controller('DashboardCtrl', ['$scope', '$interval', 'AuthService', '
 	    return;
 	}
 	var id = SessionService.getUser().id;
-	$scope.player = PlayerService.get({id: id});
-	$scope.inventory = InventoryService.get({id: id});
-	$scope.auction = AuctionService.get({}, function(auction) {
-	    if (reset) {
-
+	if (player) {
+	    $scope.player = PlayerService.get({id: id});
+	}
+	if (inventory) {
+	    $scope.inventory = InventoryService.get({id: id});
+	}
+	if (auction) {
+	    $scope.auction = AuctionService.get({}, function(auction) {
 		$scope.timer = $interval(function() {
 		    if (--$scope.auction.time_remaining <= 0) {
 			$scope.auction.time_remaining = 0;
 			$interval.cancel($scope.timer);
 		    }
 		}, 1000);
-		//console.log(timer);
-	    }
-	});
+	    });
+	}
     };
 
     SocketService.on('auction:start', function(data) {
-	console.log("Auction start");
-	reload(true);
+	reload(false, false, true);
     });
     SocketService.on('auction:end', function(data) {
-	reload(false);
-	console.log("Auction end");
+	reload(true, true, true);
     });
     SocketService.on('auction:reload', function(data) {
-	// Reload auction model
-	console.log("Auction reload");
-	reload(true);
+	reload(false, false, true);
     });
+    SocketService.on('auction:bid', function(data) {
+	$scope.auction = AuctionService.get();
+    });
+
 }]);

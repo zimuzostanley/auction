@@ -17,7 +17,7 @@
 	    <li class="list-group-item">
 
 		<input class="form-control" ng-model="amount" placeholder="Bid amount">
-		<button class="btn btn-default" class="input-group-addon" href ng-click="bid(amount, auction)" ng-disabled="sufficient(auction.cur_bid_amount, amount)">Place bid</button>
+		<button class="btn btn-default" ng-click="bid(amount, auction)" ng-disabled="sufficient_auction(auction.cur_bid_amount, amount)">Place bid</button>
 
 	    </li>
 	</ul>

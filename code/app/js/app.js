@@ -17,6 +17,9 @@ app.config(['$stateProvider', '$urlRouterProvider', '$locationProvider', functio
 	controller: 'LoginCtrl'
     }).state('dashboard', {
 	url: '/dashboard',
+	params: {
+	    login: false
+	},
 	templateUrl: 'partials/dashboard.html',
 	controller: 'DashboardCtrl'
     });
@@ -26,8 +29,8 @@ app.config(['$stateProvider', '$urlRouterProvider', '$locationProvider', functio
 }]);
 
 app.run(['$rootScope', '$state', '$stateParams', 'AuthService', function($rootScope, $state, $stateParams, AuthService) {
-    $rootScope.$state = $state;
-    $rootScope.$stateParams = $stateParams;
+//    $rootScope.$state = $state;
+//    $rootScope.$stateParams = $stateParams;
 
     /* $rootScope.$on('$routeChangeStart', function (event, nextRoute, currentRoute) {
        if (!AuthService.isLoggedIn()) {

@@ -20,9 +20,16 @@ directives.directive('stats', function() {
 // Player inventory widget
 directives.directive('inventory', function() {
     return {
+	scope: {
+	    quantity: '=',
+	    inventory: '='
+	},
 	restrict: 'E',
 	templateUrl: 'partials/inventory.html',
-	controller: 'InventoryCtrl'
+	controller: 'InventoryCtrl',
+	link: function(scope, element, attr) {
+
+	}
     };
 });
 
@@ -37,7 +44,7 @@ directives.directive('auction', function() {
 	},
 	controller: 'AuctionCtrl',
 	link: function(scope, element, attr) {
-	    
+
 	}
     };
 });

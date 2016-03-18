@@ -179,7 +179,7 @@ conn.connect(function(err) {
 
 	if (_auction) {
 	    _auction.receive_auction(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, function() {
-		io.emit('auction:reload');
+		io.emit('auction:bid');
 	    });
 	}
 	res.json(null);
