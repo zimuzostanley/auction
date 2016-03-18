@@ -44,6 +44,7 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
 
     });
 
+
     /**
      * Makes a PUT request to modify current auction
      * @params{int} value - New bid value
@@ -53,7 +54,7 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
 	$scope.amount = undefined;
 	var cur_player_id = SessionService.getUser().id;
 	PlayerService.get({id: cur_player_id}, function(player) {
-	    if (player.coins > value) {
+	    if (player.coins >= value) {
 		auction.cur_bid_amount = value;
 		auction.cur_bid_player_id = cur_player_id
 		AuctionService.update({id: auction.id}, auction, function(auction) {
@@ -101,12 +102,12 @@ controllers.controller('LoginCtrl', ['$scope', '$state', '$stateParams', 'AuthSe
 
     // Prevent visit if already logged in
     if (AuthService.isLoggedIn()) {
-	//	$scope.$state.go('dashboard');
+	$state.go('dashboard');
     }
 }]);
 
 // Dashboard controller
-controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$interval', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $state, $stateParams, $interval, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
+controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$interval', '$timeout', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $state, $stateParams, $interval, $timeout, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
     $scope.logout = function() {
 	SocketService.emit('disconnect', function() {
 	});
@@ -116,11 +117,12 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$i
 	});
 
     };
+    
     // Let the server know we just got to the dashboard so it can send a signal for us to refresh the page
-    if (!$stateParams.login) {
+//    if (!$stateParams.login) {
 	console.log('dash');
 	SocketService.emit('dashboard');
-    }
+  //  }
 
     /**
      * Reload API resources
@@ -153,11 +155,26 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$i
 	}
     };
 
+    $scope.completed = function() {
+	return $scope.hideinput;
+    }
+
     SocketService.on('auction:start', function(data) {
+	// Show 'place bid'
+	$scope.hideinput = false;
+	
 	reload(false, false, true);
     });
     SocketService.on('auction:end', function(data) {
-	reload(true, true, true);
+	// Hide 'place bid' input briefly
+	$scope.hideinput = true;
+	
+	console.log('Auction end');
+	// Wait a few seconds to show winning bid before clearing it
+	// The server counter is also waiting so you are not alone
+	$timeout(function() {
+	    reload(true, true, true);
+	}, 5000);
     });
     SocketService.on('auction:reload', function(data) {
 	reload(false, false, true);

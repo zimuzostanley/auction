@@ -41,7 +41,7 @@ Auction.get_next_auction = get_next_auction;
  */
 Auction.prototype.receive_auction = function(conn, player_id, amount, cb) {
     if (this.time < 10) {
-	this.time += 10;
+	this.time = 10;
     }
 
     if (amount > this.auction.cur_bid_amount) {
@@ -78,7 +78,10 @@ Auction.prototype.end_auction = function(conn, cb) {
 	    return;
 	}
 	self.reconcile(conn, function(err) {
-	    console.log(err);
+	    if (err) {
+		// TODO. Let the parties know
+		return console.log(err);	
+	    }
 	});
 	if (cb) {
 	    return cb();

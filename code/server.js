@@ -145,27 +145,37 @@ conn.connect(function(err) {
 	    }
 
 	    // Get auction owner's name
-	    conn.query('SELECT * FROM Player WHERE id = ?', [arows[0]['player_id']], function(err, prows) {
-		if (err || !prows[0]) {
+	    conn.query('SELECT * FROM Player WHERE id = ?', [arows[0]['player_id']], function(err, pa_rows) {
+		if (err || !pa_rows[0]) {
 		    return next(err || true);
 		}
-		// Find the item for auction
-		var item;
-		var quantity;
-		if (_auction) {
-		    return res.json({
-			id: arows[0]['id'],
-			item: arows[0]['item'],
-			quantity: arows[0]['quantity'],
-			time_remaining: _auction.time + 1, // Add 1 for network latency
-			player_id: arows[0]['player_id'],
-			player_name: prows[0]['name'],
-			cur_bid_amount: arows[0]['cur_bid_amount']
-		    });
-		}
-		else {
-		    return res.json(null);
-		}
+		// Get bidder owner's name
+		var cur_bid_player_id = arows[0]['cur_bid_player_id'];
+		conn.query('SELECT * FROM Player WHERE id = ?', [cur_bid_player_id], function(err, pb_rows) {
+		    if (err) {
+			return next(err);
+		    }
+
+		    // Find the item for auction
+		    var item;
+		    var quantity;
+		    if (_auction) {
+			return res.json({
+			    id: arows[0]['id'],
+			    item: arows[0]['item'],
+			    quantity: arows[0]['quantity'],
+			    time_remaining: _auction.time + 1, // Add 1 for network latency
+			    player_id: pa_rows[0]['id'],
+			    player_name: pa_rows[0]['name'],
+			    cur_bid_player_id: pb_rows[0] ? pb_rows[0]['id'] : undefined,
+			    cur_bid_player_name: pb_rows[0] ? pb_rows[0]['name'] : undefined,
+			    cur_bid_amount: arows[0]['cur_bid_amount']
+			});
+		    }
+		    else {
+			return res.json(null);
+		    }
+		});
 	    });
 	});
     });
@@ -174,8 +184,6 @@ conn.connect(function(err) {
     // req.params.id is the auction id
     app.put('/api/v1/auction/:id', function(req, res, next) {
 	var id = req.params.id;
-	console.log(id);
-	console.log(req.body);
 
 	if (_auction) {
 	    _auction.receive_auction(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, function() {
@@ -213,7 +221,7 @@ conn.connect(function(err) {
 	// fn('ack') to acknowledge receipt and send data along
 	socket.on('login', function(msg, fn) {
 	    socket.broadcast.emit('user:login', {id: msg.id});
-	    console.log(msg);
+	    console.log('socket login');
 	});
 
 	socket.on('dashboard', function(msg, fn) {
@@ -223,7 +231,7 @@ conn.connect(function(err) {
 	});
 
 	socket.on('disconnect', function() {
-	    console.log('disconnect');
+	    console.log('socket disconnect');
 	    socket.disconnect();
 	});
     });
@@ -241,16 +249,18 @@ conn.connect(function(err) {
      * @params{int} delay - time in seconds between when an auction ends and a new one starts
      */
     var auction_timing = function(interval, timeout, clear_interval, delay, now, immediate) {
+	// A new auction was just created. It's in the db, we'd get to it in the queue later
 	if (!immediate && _auction_on) {
 	    return;
 	}
+	// Auction has ended
 	if (_auction && immediate) {
 	    clear_interval(_auction.timer);
 	    _auction = null;
-	    io.emit('auction:end'); // Auction has ended
+	    io.emit('auction:end'); 
 	    console.log('auction end');
 	}
-
+	// Wait for a delay before popping the next auction
 	timeout(function() {
 	    Auction.get_next_auction(conn, function(err, auction) {
 		// TODO. Handle error properly. Serious problem if there is. Maybe, shutdown?
@@ -268,5 +278,7 @@ conn.connect(function(err) {
 	}, now * 1000);
 
     }
+    // Start auction counter when server starts. This runs only once
+    // Subsequently, it will be run when a new auction is created by a player
     auction_timing(setInterval, setTimeout, clearInterval, _auction_delay, 0, true);
 });

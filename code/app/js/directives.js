@@ -40,7 +40,8 @@ directives.directive('auction', function() {
 	templateUrl: 'partials/auction.html',
 	scope: {
 	    amount: '=',
-	    auction: '='
+	    auction: '=',
+	    completed: '&'
 	},
 	controller: 'AuctionCtrl',
 	link: function(scope, element, attr) {

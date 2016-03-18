@@ -1,7 +1,5 @@
-var should = require('should');
-var sinon = require('sinon');
 
-var Auction = require('../../auction');
+//var Auction = require('../../auction');
 
 describe('Auction', function() {
     var mock = {
@@ -12,7 +10,7 @@ describe('Auction', function() {
 	    quantity: 4,
 	    cur_bid_player_id: 2,
 	    cur_bid_player_name: '',
-	    cur_bid_amount: arows[0]['cur_bid_amount']
+	    cur_bid_amount: 5
 	},
 	listener: '' // Function will be mocked before use
     };

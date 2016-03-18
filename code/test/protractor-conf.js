@@ -15,7 +15,7 @@ exports.config = {
 
   framework: 'jasmine',
 
-  jasmineNodeOpts: {
+  mochaNodeOpts: {
     defaultTimeoutInterval: 30000
   }
 };
