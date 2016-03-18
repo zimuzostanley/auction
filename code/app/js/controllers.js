@@ -13,16 +13,16 @@ controllers.controller('StatCtrl', ['$scope', 'PlayerService', 'SessionService',
 }]);
 
 // Inventory controller
-controllers.controller('InventoryCtrl', ['$scope', 'InventoryService', 'SessionService', 'AuctionService', function($scope, InventoryService, SessionService, AuctionService) {
+controllers.controller('InventoryCtrl', ['$scope', '$window', 'InventoryService', 'SessionService', 'AuctionService', function($scope, $window, InventoryService, SessionService, AuctionService) {
     // Inventory of logged in user
     $scope.inventory = InventoryService.get({id: SessionService.getUser().id}, function(inventory) {
 
     });
     $scope.place_auction = function(inventory_id, item, quantity) {
-	$scope.quantity = undefined;
-	console.log($scope.quantity);
+	$scope.inventory[0].input = undefined;
 	var id = SessionService.getUser().id;
 	var auction = AuctionService.save({item: item, quantity: quantity, player_id: id, cur_state: "queued"});
+	$window.alert('Your auction has been queued.');
 
     };
 
@@ -38,7 +38,7 @@ controllers.controller('InventoryCtrl', ['$scope', 'InventoryService', 'SessionS
 }]);
 
 // Auction controller
-controllers.controller('AuctionCtrl', ['$scope', 'AuctionService', 'SessionService', 'PlayerService', function($scope, AuctionService, SessionService, PlayerService) {
+controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'SessionService', 'PlayerService', function($scope, $window, AuctionService, SessionService, PlayerService) {
     // Current auction
     $scope.auction = AuctionService.get({}, function(auction) {
 
@@ -59,9 +59,10 @@ controllers.controller('AuctionCtrl', ['$scope', 'AuctionService', 'SessionServi
 		AuctionService.update({id: auction.id}, auction, function(auction) {
 
 		});
+		$window.alert('You have bidded successfully.');
 	    }
 	    else {
-		// Tell player he has insufficient coins
+		$window.alert('You have insufficient coins!');
 	    }
 	});
     };
