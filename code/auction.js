@@ -39,7 +39,7 @@ Auction.get_next_auction = get_next_auction;
  * @params{int} player_id - player id of new bid
  * @params{int} amount - new value of bid
  */
-Auction.prototype.receive_bid = function(conn, player_id, amount, cb) {
+Auction.prototype.receive_auction = function(conn, player_id, amount, cb) {
     if (this.time < 10) {
 	this.time += 10;
     }

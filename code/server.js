@@ -75,6 +75,7 @@ conn.connect(function(err) {
 
     // Logout
     app.get('/api/v1/logout', function (req, res) {
+	console.log('logout');
 	res.json(null);
     });
 
@@ -143,14 +144,10 @@ conn.connect(function(err) {
 		return next(err || true);
 	    }
 
-	    // Get highest bid player's name
-	    var cur_bid_player_id = arows[0]['cur_bid_player_id'];
-	    conn.query('SELECT * FROM Player WHERE id = ?', [cur_bid_player_id], function(err, prows) {
-		if (err) {
-		    return next(err);
-		}
-		if (prows[0]) {
-		    var name = prows[0]['name'];
+	    // Get auction owner's name
+	    conn.query('SELECT * FROM Player WHERE id = ?', [arows[0]['player_id']], function(err, prows) {
+		if (err || !prows[0]) {
+		    return next(err || true);
 		}
 		// Find the item for auction
 		var item;
@@ -160,10 +157,9 @@ conn.connect(function(err) {
 			id: arows[0]['id'],
 			item: arows[0]['item'],
 			quantity: arows[0]['quantity'],
-			player_id: arows[0]['player_id'],
 			time_remaining: _auction.time + 1, // Add 1 for network latency
-			cur_bid_player_id: cur_bid_player_id,
-			cur_bid_player_name: name || 'No bid yet',
+			player_id: arows[0]['player_id'],
+			player_name: prows[0]['name'],
 			cur_bid_amount: arows[0]['cur_bid_amount']
 		    });
 		}
@@ -174,7 +170,7 @@ conn.connect(function(err) {
 	});
     });
 
-    // PUT called when a bid is received for an available auction,
+    // PUT called when a auction is received for an available auction,
     // req.params.id is the auction id
     app.put('/api/v1/auction/:id', function(req, res, next) {
 	var id = req.params.id;
@@ -182,7 +178,7 @@ conn.connect(function(err) {
 	console.log(req.body);
 
 	if (_auction) {
-	    _auction.receive_bid(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, function() {
+	    _auction.receive_auction(conn, req.body.cur_bid_player_id, req.body.cur_bid_amount, function() {
 		io.emit('auction:reload');
 	    });
 	}

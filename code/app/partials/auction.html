@@ -3,7 +3,7 @@
     <div class="panel-body">
 	<ul class="list-group" ng-show="auction.item">
 	    <li class="list-group-item">
-		<span><em>Seller: </em></span> <span><strong>{{auction.cur_bid_player_name}}</strong></span>		
+		<span><em>Seller: </em></span> <span><strong>{{auction.player_name}}</strong></span>		
 	    </li>
 	    <li class="list-group-item">
 		<span><em>{{auction.item}}: </em></span> <span><strong>{{auction.quantity}}</strong></span>
@@ -15,10 +15,10 @@
 		<span><em>Winning bid: </em></span> <span><strong>{{auction.cur_bid_amount}}</strong></span>
 	    </li>
 	    <li class="list-group-item">
-		<div class="input-group">
-		    <input class="form-control" ng-model="amount" placeholder="Bid amount">
-		    <a class="input-group-addon" href ng-click="bid(amount, auction)">Place bid</a>
-		</div>
+
+		<input class="form-control" ng-model="amount" placeholder="Bid amount">
+		<button class="btn btn-default" class="input-group-addon" href ng-click="bid(amount, auction)" ng-disabled="sufficient(auction.cur_bid_amount, amount)">Place bid</button>
+
 	    </li>
 	</ul>
 	<p ng-hide="auction.item">

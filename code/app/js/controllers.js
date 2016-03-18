@@ -23,6 +23,17 @@ controllers.controller('InventoryCtrl', ['$scope', 'InventoryService', 'SessionS
 	var id = SessionService.getUser().id;
 	var auction = AuctionService.save({item: item, quantity: quantity, player_id: id, cur_state: "queued"});
     };
+
+    $scope.sufficient = function(mine, bid) {
+	if (!bid) {
+	    return true;
+	}
+	if (mine >= bid) {
+	    $scope.quantity = undefined;
+	    return false;	    
+	}
+	return true;
+    }
 }]);
 
 // Auction controller
@@ -52,6 +63,18 @@ controllers.controller('AuctionCtrl', ['$scope', 'AuctionService', 'SessionServi
 	    }
 	});
     };
+
+    $scope.sufficient = function(highest, cur) {
+	if (!cur) {
+	    return true;
+	}
+	if (highest < cur) {
+//	    $scope.amount = undefined;
+	    return false;
+	}
+	return true;
+    }
+
 }]);
 
 // Login controller
@@ -77,7 +100,7 @@ controllers.controller('LoginCtrl', ['$scope', 'AuthService', 'SessionService', 
 
     // Prevent visit if already logged in
     if (AuthService.isLoggedIn()) {
-	$scope.$state.go('dashboard');
+//	$scope.$state.go('dashboard');
     }
 }]);
 
@@ -105,6 +128,9 @@ controllers.controller('DashboardCtrl', ['$scope', '$interval', 'AuthService', '
 	if ($scope.timer) {
 	    $interval.cancel($scope.timer);
 	}
+	if (!SessionService.getUser()) {
+	    return;
+	}
 	var id = SessionService.getUser().id;
 	$scope.player = PlayerService.get({id: id});
 	$scope.inventory = InventoryService.get({id: id});
@@ -127,12 +153,12 @@ controllers.controller('DashboardCtrl', ['$scope', '$interval', 'AuthService', '
 	reload(true);
     });
     SocketService.on('auction:end', function(data) {
-//	reload(false);
+	reload(false);
 	console.log("Auction end");
     });
     SocketService.on('auction:reload', function(data) {
 	// Reload auction model
 	console.log("Auction reload");
-//	reload(true);
+	reload(true);
     });
 }]);
