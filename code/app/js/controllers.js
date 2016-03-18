@@ -83,20 +83,18 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
 controllers.controller('LoginCtrl', ['$scope', '$state', '$stateParams', 'AuthService', 'SessionService', 'SocketService', function($scope, $state, $stateParams, AuthService, SessionService, SocketService) {
     $scope.login = function(name) {
 	AuthService.login(name, function() {
-	    var player_id = SessionService.getUser().id
-	    console.log("Socket login");
+	    var player_id = SessionService.getUser().id;
 	    SocketService.emit('login', {id: player_id});
 	    SocketService.on('user:login', function(data) {
-		if (data.id == player_id) {
+		if (data.id === player_id) {
 		    // If client receives a login from another client with same id
 		    // logout this client
 		    AuthService.logout(function() {
 			$state.go('login');
 		    });
 		}
-		console.log(data);
 	    });
-	    $state.go('dashboard', {login: true});
+	    $state.go('dashboard');
 	});
     };
 
@@ -111,18 +109,14 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$i
     $scope.logout = function() {
 	SocketService.emit('disconnect', function() {
 	});
-	console.log('disconnect');
 	AuthService.logout(function() {
 	    $state.go('login');
 	});
-
     };
-    
+
     // Let the server know we just got to the dashboard so it can send a signal for us to refresh the page
-//    if (!$stateParams.login) {
-	console.log('dash');
-	SocketService.emit('dashboard');
-  //  }
+    var player_id = SessionService.getUser().id
+    SocketService.emit('dashboard', {id: player_id});
 
     /**
      * Reload API resources
@@ -162,14 +156,13 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$i
     SocketService.on('auction:start', function(data) {
 	// Show 'place bid'
 	$scope.hideinput = false;
-	
+
 	reload(false, false, true);
     });
     SocketService.on('auction:end', function(data) {
 	// Hide 'place bid' input briefly
 	$scope.hideinput = true;
-	
-	console.log('Auction end');
+
 	// Wait a few seconds to show winning bid before clearing it
 	// The server counter is also waiting so you are not alone
 	$timeout(function() {
@@ -182,5 +175,13 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$i
     SocketService.on('auction:bid', function(data) {
 	$scope.auction = AuctionService.get();
     });
-
+    SocketService.on('user:login', function(data) {
+	if (data.id === player_id) {
+	    // If client receives a login from another client with same id
+	    // logout this client
+	    AuthService.logout(function() {
+		$state.go('login');
+	    });
+	}
+    });
 }]);

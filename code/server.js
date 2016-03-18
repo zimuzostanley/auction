@@ -218,20 +218,22 @@ conn.connect(function(err) {
 
     // Socket connection
     io.on('connection', function(socket) {
-	// fn('ack') to acknowledge receipt and send data along
 	socket.on('login', function(msg, fn) {
+	    // Tell everybody asides yourself that you are online
+	    // To prevent multiple logins with one account
 	    socket.broadcast.emit('user:login', {id: msg.id});
-	    console.log('socket login');
 	});
 
 	socket.on('dashboard', function(msg, fn) {
+	    // Tell everybody asides yourself that you are online
+	    // To prevent multiple logins with one account
+	    socket.broadcast.emit('user:login', {id: msg.id});
 	    if (_auction) {
 		socket.emit('auction:reload');
 	    }
 	});
 
 	socket.on('disconnect', function() {
-	    console.log('socket disconnect');
 	    socket.disconnect();
 	});
     });
