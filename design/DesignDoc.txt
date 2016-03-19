@@ -7,7 +7,37 @@ This project is a critical feature in a multiplayer game platform. It enables pl
 Other players can bid for these tokens, after a time duration when no player has bidded, the auction ends and the tokens go to the highest bidder while the
 coins used in purchasing are deducted from his/her account. The auctioner's inventory and coins also reflect the appropriate changes.
 
-HIGH LEVEL ENTITIES
+HIGH LEVEL DATA MODELS
 --------------------
 
-The database schema consists of 3 tables
+The Schema consists of 3 entities: Inventory, Player and Auction. Their names are intuitive in the context of the project.
+
+
+
+AUCTIONING ALGORITHM
+-------------------
+1. When the server is started, an Auction object is instantiated.
+2. This object starts a countdown timer for the oldest 'queued' auction in the database.
+3. When this object expires, it is flagged as 'done' in the db.
+4. This object's timer is destroyed and it is set to null, while waiting for a 10 second delay
+5. The 'new oldest' 'queued' object is instantiated and #2-#4 is repeated until there's no more 'queued' auctions in the database.
+
+These events are communicated to the client via WebSockets. The client has it's own timer to display the current time remaining for each auction.
+
+Keeping the two timers in sync over a network is an issue.
+
+
+LIST OF TECHNOLOGIES USED
+-------------------------
+HTTP server: Node.js with the express framework
+WebSocket library: Socket.io
+Frontend Javascript framework: Angular JS
+Frontend UI Framework: Bootstrap
+Backend Unit Test runner: Mocha
+Frontend Unit Test runner: Karma/Mocha
+Frontend End to End Test runner: Protractor/Jasmine
+Backend Package manager: NPM
+Frontend Package manager: Bower
+
+
+

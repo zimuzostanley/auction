@@ -7,7 +7,10 @@
 		<img ng-src="img/{{item.name}}.png" alt="{{item.name}}">
 
 		<input class="form-control" ng-model="item.input" placeholder="{{item.name}} quantity less than or equal to {{item.quantity}}">
-		<button class="btn btn-default" ng-click="place_auction(item.id, item.name, item.input)" ng-disabled="sufficient_inventory(item.quantity, item.input)">Auction</button>
+		<br>
+		<input class="form-control" ng-model="item.cur_bid_amount" placeholder="Minimum bid greater than or equal to 0">
+		<br>
+		<button class="btn btn-default" ng-click="place_auction(item.id, item.name, item.input, item.cur_bid_amount)" ng-disabled="sufficient_inventory(item.quantity, item.input, item.cur_bid_amount)">Auction</button>
 
 	    </li>
 	</ul>

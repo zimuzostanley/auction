@@ -18,18 +18,18 @@ USE auction;
 -- Inventory
 CREATE TABLE Inventory (
        id INT PRIMARY KEY AUTO_INCREMENT,
-       bread INT DEFAULT 30, -- quantity of bread
-       carrot INT DEFAULT 18, -- quantity of carrot
-       diamond INT DEFAULT 1 -- quantity of diamond
+       bread INT DEFAULT 30 NOT NULL, -- quantity of bread
+       carrot INT DEFAULT 18 NOT NULL, -- quantity of carrot
+       diamond INT DEFAULT 1 NOT NULL -- quantity of diamond
 );
 
 -- Player
 CREATE TABLE Player (
        id INT PRIMARY KEY AUTO_INCREMENT,
-       name VARCHAR(255) UNIQUE,
+       name VARCHAR(255) UNIQUE NOT NULL,
        inventory_id INT NOT NULL,
-       coins INT DEFAULT 1000,
-       date DATETIME DEFAULT CURRENT_TIMESTAMP,
+       coins INT DEFAULT 1000 NOT NULL,
+       date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
        FOREIGN KEY (inventory_id) REFERENCES Inventory(id)
 );
 
@@ -37,13 +37,13 @@ CREATE TABLE Player (
 CREATE TABLE Auction (
        id INT PRIMARY KEY AUTO_INCREMENT,
        item ENUM ('Bread', 'Carrot', 'Diamond') NOT NULL,
-       time_remaining INT DEFAULT 90, -- time left before it enters the 10 second 'extra time'
-       quantity INT DEFAULT 0, -- quantity of bread
+       time_remaining INT DEFAULT 90 NOT NULL, -- time left before it enters the 10 second 'extra time'
+       quantity INT DEFAULT 0 NOT NULL, -- quantity of bread
        player_id INT NOT NULL, -- owner of auction
        cur_state ENUM ('done', 'queued') NOT NULL DEFAULT 'queued', -- state of auction
        cur_bid_player_id INT, -- Player with current bid
-       cur_bid_amount INT DEFAULT 0, -- Amount of current bid
-       date DATETIME DEFAULT CURRENT_TIMESTAMP,	
+       cur_bid_amount INT DEFAULT 0 NOT NULL, -- Amount of current bid
+       date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,	
        FOREIGN KEY (player_id) REFERENCES Player(id), 
        FOREIGN KEY (cur_bid_player_id) REFERENCES Player(id)
 );

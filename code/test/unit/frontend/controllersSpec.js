@@ -142,6 +142,13 @@ describe('Controllers', function() {
 	    should(scope.sufficient_inventory(40, 41)).be.false;
 	    should(scope.sufficient_inventory(40, 40)).be.true;
 	});
+
+	it('should check that my inventory inputs are valid', function() {
+	    should(scope.sufficient_inventory(40, '-8', 8)).be.true;
+	    should(scope.sufficient_inventory(9, '9', '9')).be.true;
+	    should(scope.sufficient_inventory(40, false, 7)).be.true;
+	    should(scope.sufficient_inventory(40, 40, 'a')).be.true;
+	});
     });
 
     describe('AuctionCtrl', function() {
@@ -171,6 +178,13 @@ describe('Controllers', function() {
 	    should(scope.sufficient_auction(40, undefined)).be.true;
 	    should(scope.sufficient_auction(40, 41)).be.false;
 	    should(scope.sufficient_auction(40, 40)).be.true;
+	});
+
+	it('should check that my auction inputs are valid', function() {
+	    should(scope.sufficient_auction(40, '-8')).be.true;
+	    should(scope.sufficient_auction(9, '9')).be.false;
+	    should(scope.sufficient_auction(40, false)).be.true;
+	    should(scope.sufficient_auction('b', 40)).be.true;
 	});
     });
 

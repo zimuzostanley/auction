@@ -75,7 +75,6 @@ conn.connect(function(err) {
 
     // Logout
     app.get('/api/v1/logout', function (req, res) {
-	console.log('logout');
 	res.json(null);
     });
 
@@ -136,8 +135,8 @@ conn.connect(function(err) {
     /**
      * Auction API
      */
-    // GET called when the dashboard view is loaded, it gets the oldest 'queued' object
-    // or a descriptive object describing that there are no available auctions
+    // GET: called when the dashboard view is loaded, it gets the oldest 'queued' auction object
+    // or an empty object signifying that there are no available auctions
     app.get('/api/v1/auction', function(req, res, next) {
 	conn.query('SELECT * FROM Auction WHERE cur_state = ? ORDER BY date ASC LIMIT 1 ', ['queued'], function(err, arows) {
 	    if (err || !arows[0]) {
@@ -169,7 +168,8 @@ conn.connect(function(err) {
 			    player_name: pa_rows[0]['name'],
 			    cur_bid_player_id: pb_rows[0] ? pb_rows[0]['id'] : undefined,
 			    cur_bid_player_name: pb_rows[0] ? pb_rows[0]['name'] : undefined,
-			    cur_bid_amount: arows[0]['cur_bid_amount']
+			    cur_bid_amount: arows[0]['cur_bid_amount'],
+			    minimum_bid: arows[0]['minimum_bid']
 			});
 		    }
 		    else {
@@ -180,7 +180,7 @@ conn.connect(function(err) {
 	});
     });
 
-    // PUT called when an auction is received for an available auction,
+    // PUT: called when an auction is received for an available auction,
     // req.params.id is the auction id
     app.put('/api/v1/auction/:id', function(req, res, next) {
 	var id = req.params.id;
@@ -193,8 +193,10 @@ conn.connect(function(err) {
 	res.json(null);
     });
 
+    // POST: Called when an auction is created
     app.post('/api/v1/auction', function(req, res, next) {
-	conn.query('INSERT INTO Auction SET ?', {item: req.body.item, quantity: req.body.quantity, player_id: req.body.player_id, cur_state: req.body.cur_state}, function(err, row) {
+	console.log(req.body);
+	conn.query('INSERT INTO Auction SET ?', {item: req.body.item, quantity: req.body.quantity, player_id: req.body.player_id, cur_state: req.body.cur_state, cur_bid_amount: req.body.cur_bid_amount}, function(err, row) {
 	    if (err || !row) {
 		return next(err);
 	    }
@@ -240,7 +242,7 @@ conn.connect(function(err) {
 
     // Auction timing global
     var _auction;
-    var _auction_delay = 1;
+    var _auction_delay = 10;
     var _auction_on;
 
     // TODO. Inject all dependencies and return _auction as an object in a callback
@@ -260,7 +262,6 @@ conn.connect(function(err) {
 	    clear_interval(_auction.timer);
 	    _auction = null;
 	    io.emit('auction:end'); 
-	    console.log('auction end');
 	}
 	// Wait for a delay before popping the next auction
 	timeout(function() {
@@ -274,7 +275,6 @@ conn.connect(function(err) {
 		    _auction_on = true;
 		    _auction = new Auction(auction, interval, auction_timing.bind(this, interval, timeout, clear_interval, delay, delay, true), conn);
 		    io.emit('auction:start');
-		    console.log('auction start');
 		}
 	    });
 	}, now * 1000);

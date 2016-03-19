@@ -26,10 +26,7 @@ directives.directive('inventory', function() {
 	},
 	restrict: 'E',
 	templateUrl: 'partials/inventory.html',
-	controller: 'InventoryCtrl',
-	link: function(scope, element, attr) {
-
-	}
+	controller: 'InventoryCtrl'
     };
 });
 
@@ -43,9 +40,6 @@ directives.directive('auction', function() {
 	    auction: '=',
 	    completed: '&'
 	},
-	controller: 'AuctionCtrl',
-	link: function(scope, element, attr) {
-
-	}
+	controller: 'AuctionCtrl'
     };
 });

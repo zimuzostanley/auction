@@ -21,25 +21,33 @@ controllers.controller('InventoryCtrl', ['$scope', '$window', 'InventoryService'
 
     /**
      * Create a new auction from a player's inventory
-     * @param{int} inventory_id 
+     * @param{int} inventory_id
      * @param{string} item - type of item (bread/carrot/diamond)
      * @param{int} quantity - quantity of item
-    */
-    $scope.place_auction = function(inventory_id, item, quantity) {
-	$scope.inventory[0].input = undefined;
+     */
+    $scope.place_auction = function(inventory_id, item, quantity, cur_bid_amount) {
 	var id = SessionService.getUser().id;
-	var auction = AuctionService.save({item: item, quantity: quantity, player_id: id, cur_state: "queued"});
+	console.log(cur_bid_amount);
+	var auction = AuctionService.save({item: item, quantity: quantity, player_id: id, cur_state: "queued", cur_bid_amount: cur_bid_amount});
+	for (var i = 0; i < 3; i++) {
+	    $scope.inventory[i].input = undefined;
+	    $scope.inventory[i].cur_bid_amount = undefined;	    
+	}
 	$window.alert('Your auction has been queued.');
     };
 
     /**
-     * Checks that a new bid (cur) is greater than the current highest bid (highest)
-     * @param{int} highest
-     * @param{int} cur
+     * Checks that a new auction doesn't exceed the inventory and there's a valid minimum bid
+     * @param{int} mine
+     * @param{int} bid
+     * @param{int} minimum_bid
      * @returns boolean
      */
-    $scope.sufficient_inventory = function(mine, bid) {
-	if (!bid) {
+    $scope.sufficient_inventory = function(mine, bid, minimum_bid) {
+	if (parseInt(bid) != bid || parseInt(minimum_bid) != minimum_bid || parseInt(mine) != mine) {
+	    return true;
+	}
+	if (mine < 0 || bid < 0 || minimum_bid < 0) {
 	    return true;
 	}
 	if (mine >= bid) {
@@ -55,7 +63,6 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
     $scope.auction = AuctionService.get({}, function(auction) {
 
     });
-
 
     /**
      * Makes a PUT request to modify current auction
@@ -81,13 +88,24 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
     };
 
     /**
+     * Indicates if the auction was won
+     * @returns{boolean}
+    */
+    $scope.won = function() {
+	return !!$scope.auction.cur_bid_player_name;
+    }
+
+    /**
      * Checks that a new bid (cur) is greater than the current highest bid (highest)
      * @param{int} highest
      * @param{int} cur
      * @returns boolean
-    */
+     */
     $scope.sufficient_auction = function(highest, cur) {
-	if (!cur) {
+	if (parseInt(cur) != cur || parseInt(highest) != highest) {
+	    return true;
+	}
+	if (highest < 0 || cur < 0) {
 	    return true;
 	}
 	if (highest < cur) {
@@ -103,7 +121,7 @@ controllers.controller('LoginCtrl', ['$scope', '$state', 'AuthService', 'Session
      * Logs user in, and stores user id in localStorage as a session token
      * Broadcasts this event to all clients
      * @param{string} name - username
-    */
+     */
     $scope.login = function(name) {
 	AuthService.login(name, function() {
 	    var player_id = SessionService.getUser().id;
@@ -128,7 +146,7 @@ controllers.controller('LoginCtrl', ['$scope', '$state', 'AuthService', 'Session
 }]);
 
 // Dashboard controller
-controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$timeout', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $state, $interval, $timeout, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
+controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$timeout', '$window', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $state, $interval, $timeout, $window, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
     /**
      * Log user out and disconnect socket
      */
@@ -152,9 +170,17 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$time
      */
     // TODO. Make this block testable/reachable publicly?
     var reload = function(player, inventory, auction) {
+	/**
+	 * Cancels the timer if on the previous iteration,
+	 * there was a disparity in the client and server timer
+	 * and the server finished counting down before the client
+	 * could end it's timer in it's callback
+	 */
 	if ($scope.timer) {
 	    $interval.cancel($scope.timer);
+	    $scope.timer = null;
 	}
+
 	if (!SessionService.getUser()) {
 	    return;
 	}
@@ -171,11 +197,13 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$time
 		    if (--$scope.auction.time_remaining <= 0) {
 			$scope.auction.time_remaining = 0;
 			$interval.cancel($scope.timer);
+			$scope.timer = null;
 		    }
 		}, 1000);
 	    });
 	}
     };
+
 
     /**
      * Checks if auction is completed
@@ -186,8 +214,17 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$time
     }
 
     /**
+     * When tab comes in focus, sync client time with server
+     * Some browsers like Chrome, pause long running background activities
+     * like timers, when their windows are not in focus
+     */
+    $window.onfocus = function() {
+	reload(false, false, true);
+    };
+
+    /**
      * Important socket listeners. This is realtime!!
-    */
+     */
     SocketService.on('auction:start', function(data) {
 	// Show 'place bid'
 	$scope.hideinput = false;
@@ -201,8 +238,9 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$time
 	// Wait a few seconds to show winning bid before clearing it
 	// The server counter is also waiting so you are not alone
 	$timeout(function() {
-	    reload(true, true, true);
-	}, 5000);
+	    reload(true, true, false);
+	    $scope.auction = AuctionService.get();
+	}, 10000);
     });
     SocketService.on('auction:reload', function(data) {
 	reload(false, false, true);

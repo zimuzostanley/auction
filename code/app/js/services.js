@@ -20,7 +20,7 @@ services.factory('InventoryService', ['$resource', function($resource) {
 services.factory('AuctionService', ['$resource', function($resource) {
     return $resource('api/v1/auction/:id', {}, {
 	update: {method: 'PUT'},
-	save: {method: 'POST', params: {item: 'id', quantity: 'quantity', 'player_id': 'player_id', 'cur_state': 'queued'}}}
+	save: {method: 'POST', params: {item: 'id', quantity: 'quantity', player_id: 'player_id', cur_state: 'queued', cur_bid_amount: 'cur_bid_amount'}}}
     );
 }]);
 
@@ -108,6 +108,11 @@ services.factory('SocketService', ['$rootScope', function($rootScope) {
     var socket = io.connect('/');
 
     return {
+	/**
+	 * Listens on events
+	 * @param{string} eventName
+	 * @param{Function} cb
+	*/
 	on: function(eventName, cb) {
 	    socket.on(eventName, function() {
 		var args = arguments;
@@ -116,6 +121,12 @@ services.factory('SocketService', ['$rootScope', function($rootScope) {
 		});
 	    });
 	},
+	/**
+	 * Emits on events
+	 * @param{string} eventName
+	 * @param{object} data
+	 * @param{Function} cb
+	 */
 	emit: function(eventName, data, cb) {
 	    socket.emit(eventName, data, function() {
 		var args = arguments;

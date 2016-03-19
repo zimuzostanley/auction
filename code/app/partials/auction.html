@@ -15,15 +15,16 @@
 		<span><em>Winning bid: </em></span> <span><strong>{{auction.cur_bid_amount}}</strong></span>
 	    </li>
 	    <li class="list-group-item" ng-hide="completed()">
-
 		<input class="form-control" ng-model="amount" placeholder="Bid amount greater than {{auction.cur_bid_amount}}">
+		<br>
 		<button class="btn btn-default" ng-click="bid(amount, auction)" ng-disabled="sufficient_auction(auction.cur_bid_amount, amount)">Place bid</button>
-
 	    </li>
 	    <li class="list-group-item" ng-show="completed()">
-		<span><span><strong>{{auction.cur_bid_player_name}} has won the auction</strong></span>
+		<span><span><strong>
+		    <em ng-show="won()">{{auction.cur_bid_player_name}}</em>
+		    <em ng-hide="won()">Nobody</em>
+		    won the auction</strong></span>
 	    </li>
-
 	</ul>
 	<p ng-hide="auction.item">
 	    No auction at the moment

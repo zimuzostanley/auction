@@ -1,5 +1,7 @@
+var should = require('should');
+var sinon = require('sinon');
 
-//var Auction = require('../../auction');
+var Auction = require('../../../auction');
 
 describe('Auction', function() {
     var mock = {

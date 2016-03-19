@@ -2,7 +2,7 @@
 
 /* App Module */
 var app = angular.module('AuctionApp', [
-//    'ngResource',
+    'ngResource',
     'ui.router',
     'Services',
     'Controllers',
@@ -10,7 +10,6 @@ var app = angular.module('AuctionApp', [
 ]);
 
 app.config(['$stateProvider', '$urlRouterProvider', '$locationProvider', function($stateProvider, $urlRouterProvider, $locationProvider) {
-//    $locationProvider.html5Mode(true);
     $stateProvider.state('login', {
 	url: '/login',
 	templateUrl: 'partials/login.html',
@@ -29,29 +28,10 @@ app.config(['$stateProvider', '$urlRouterProvider', '$locationProvider', functio
 }]);
 
 app.run(['$rootScope', '$state', '$stateParams', 'AuthService', function($rootScope, $state, $stateParams, AuthService) {
-//    $rootScope.$state = $state;
-//    $rootScope.$stateParams = $stateParams;
-
-    /* $rootScope.$on('$routeChangeStart', function (event, nextRoute, currentRoute) {
-       if (!AuthService.isLoggedIn()) {
-       $state.go('login');
-       console.log("Route log prevent");
-       event.preventDefault();
-       }
-       }); */
-
     $rootScope.$on('$locationChangeStart', function(event, newUrl, oldUrl) {
 	if (!AuthService.isLoggedIn() && newUrl.split('#')[1] !== '/login') {
 	    $state.go('login');
 	    event.preventDefault();
 	}	
     });
-
-    /* $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
-       if (!AuthService.isLoggedIn()) {
-       $state.go('login');
-       console.log("State log prevent");
-       event.preventDefault();
-       }	
-       }); */
 }]);
