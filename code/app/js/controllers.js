@@ -36,6 +36,7 @@ controllers.controller('InventoryCtrl', ['$scope', '$window', 'InventoryService'
      * Checks that a new bid (cur) is greater than the current highest bid (highest)
      * @param{int} highest
      * @param{int} cur
+     * @returns boolean
      */
     $scope.sufficient_inventory = function(mine, bid) {
 	if (!bid) {
@@ -83,6 +84,7 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
      * Checks that a new bid (cur) is greater than the current highest bid (highest)
      * @param{int} highest
      * @param{int} cur
+     * @returns boolean
     */
     $scope.sufficient_auction = function(highest, cur) {
 	if (!cur) {
@@ -148,6 +150,7 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$time
      * @param{object} old_timer - cancels old timer to prevent any leaks or corruption (may not be necessary)
      * @param{boolean} start - resets the timer if true
      */
+    // TODO. Make this block testable/reachable publicly?
     var reload = function(player, inventory, auction) {
 	if ($scope.timer) {
 	    $interval.cancel($scope.timer);
@@ -176,12 +179,15 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$time
 
     /**
      * Checks if auction is completed
-     * @returns
+     * @returns boolean
      */
     $scope.completed = function() {
 	return $scope.hideinput;
     }
 
+    /**
+     * Important socket listeners. This is realtime!!
+    */
     SocketService.on('auction:start', function(data) {
 	// Show 'place bid'
 	$scope.hideinput = false;

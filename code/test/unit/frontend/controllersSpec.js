@@ -204,18 +204,64 @@ describe('Controllers', function() {
 	    scope.login('zim');
 	    should(spy.called).be.true;
 	});
+
+	afterEach(function() {
+	    sinon.restore(_SocketService, 'on');
+	    sinon.restore(_SocketService, 'emit');
+	    sinon.restore(_AuthService, 'login');
+	});
     });
 
     describe('DashboardCtrl', function() {
-	var scope, ctrl, _AuthService, _SocketService;
+	var scope, ctrl, _AuthService, _SocketService, _$rootScope, _$controller;
 
-	beforeEach(inject(function($rootScope, $controller, SocketService, AuthService) {
-	    scope = $rootScope.$new();
-	    ctrl = $controller('LoginCtrl', {$scope: scope});
+	beforeEach(inject(function($rootScope, $controller, SocketService, AuthService) {	    
+	    _$rootScope = $rootScope;
+	    _$controller = $controller;
 	    _AuthService = AuthService;
 	    _SocketService = SocketService;
 	}));
 
+	it ('should register 5 different socket event listeners', function() {
+	    var spy = sinon.spy(_SocketService, 'on');
+	    scope = _$rootScope.$new();
+	    ctrl = _$controller('DashboardCtrl', {$scope: scope});
+	    should(spy.callCount).be.equal(5);	    
+	});
+
+	it ('should emit our presence in the dashboard, as if we just logged in', function() {
+	    var spy = sinon.spy(_SocketService, 'emit');
+	    scope = _$rootScope.$new();
+	    ctrl = _$controller('DashboardCtrl', {$scope: scope});
+	    should(spy.calledOnce).be.true;	 
+	});
+
+	it('should return "hideinput" scope on completed', function() {
+	    scope.hideinput = true;
+	    should(scope.completed()).equal.true;
+	    scope.hideinput = false;
+	    should(scope.completed()).equal.false;
+	});
+
+	it('should emit disconnect on logout', function() {
+	    var spy = sinon.spy(_SocketService, 'emit');
+	    
+	    scope.logout('zim');
+	    should(spy.called).be.true;
+	});
+
+	it('should log user out on logout', function() {
+	    var spy = sinon.spy(_AuthService, 'logout');
+	    
+	    scope.logout('zim');
+	    should(spy.called).be.true;	    
+	});
+
+	afterEach(function() {
+	    sinon.restore(_SocketService, 'on');
+	    sinon.restore(_SocketService, 'emit');
+	    sinon.restore(_AuthService, 'logout');
+	});
     });
 
 });

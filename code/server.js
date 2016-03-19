@@ -180,7 +180,7 @@ conn.connect(function(err) {
 	});
     });
 
-    // PUT called when a auction is received for an available auction,
+    // PUT called when an auction is received for an available auction,
     // req.params.id is the auction id
     app.put('/api/v1/auction/:id', function(req, res, next) {
 	var id = req.params.id;
