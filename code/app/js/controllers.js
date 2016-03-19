@@ -18,6 +18,13 @@ controllers.controller('InventoryCtrl', ['$scope', '$window', 'InventoryService'
     $scope.inventory = InventoryService.get({id: SessionService.getUser().id}, function(inventory) {
 
     });
+
+    /**
+     * Create a new auction from a player's inventory
+     * @param{int} inventory_id 
+     * @param{string} item - type of item (bread/carrot/diamond)
+     * @param{int} quantity - quantity of item
+    */
     $scope.place_auction = function(inventory_id, item, quantity) {
 	$scope.inventory[0].input = undefined;
 	var id = SessionService.getUser().id;
@@ -25,6 +32,11 @@ controllers.controller('InventoryCtrl', ['$scope', '$window', 'InventoryService'
 	$window.alert('Your auction has been queued.');
     };
 
+    /**
+     * Checks that a new bid (cur) is greater than the current highest bid (highest)
+     * @param{int} highest
+     * @param{int} cur
+     */
     $scope.sufficient_inventory = function(mine, bid) {
 	if (!bid) {
 	    return true;
@@ -46,8 +58,8 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
 
     /**
      * Makes a PUT request to modify current auction
-     * @params{int} value - New bid value
-     * @params{object} auction - current auction object
+     * @param{int} value - New bid value
+     * @param{object} auction - current auction object
      */
     $scope.bid = function(value, auction) {
 	$scope.amount = undefined;
@@ -67,6 +79,11 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
 	});
     };
 
+    /**
+     * Checks that a new bid (cur) is greater than the current highest bid (highest)
+     * @param{int} highest
+     * @param{int} cur
+    */
     $scope.sufficient_auction = function(highest, cur) {
 	if (!cur) {
 	    return true;
@@ -79,7 +96,12 @@ controllers.controller('AuctionCtrl', ['$scope', '$window', 'AuctionService', 'S
 }]);
 
 // Login controller
-controllers.controller('LoginCtrl', ['$scope', '$state', '$stateParams', 'AuthService', 'SessionService', 'SocketService', function($scope, $state, $stateParams, AuthService, SessionService, SocketService) {
+controllers.controller('LoginCtrl', ['$scope', '$state', 'AuthService', 'SessionService', 'SocketService', function($scope, $state, AuthService, SessionService, SocketService) {
+    /**
+     * Logs user in, and stores user id in localStorage as a session token
+     * Broadcasts this event to all clients
+     * @param{string} name - username
+    */
     $scope.login = function(name) {
 	AuthService.login(name, function() {
 	    var player_id = SessionService.getUser().id;
@@ -104,7 +126,11 @@ controllers.controller('LoginCtrl', ['$scope', '$state', '$stateParams', 'AuthSe
 }]);
 
 // Dashboard controller
-controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$interval', '$timeout', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $state, $stateParams, $interval, $timeout, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
+controllers.controller('DashboardCtrl', ['$scope', '$state', '$interval', '$timeout', 'AuthService', 'SessionService', 'SocketService', 'PlayerService', 'InventoryService', 'AuctionService', function($scope, $state, $interval, $timeout, AuthService, SessionService, SocketService, PlayerService, InventoryService, AuctionService) {
+    /**
+     * Log user out and disconnect socket
+     */
+    // TODO. Is disconnect event redundant?
     $scope.logout = function() {
 	SocketService.emit('disconnect', function() {
 	});
@@ -119,8 +145,8 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$i
 
     /**
      * Reload API resources
-     * @params{object} old_timer - cancels old timer to prevent any leaks or corruption (may not be necessary)
-     * @params{boolean} start - resets the timer if true
+     * @param{object} old_timer - cancels old timer to prevent any leaks or corruption (may not be necessary)
+     * @param{boolean} start - resets the timer if true
      */
     var reload = function(player, inventory, auction) {
 	if ($scope.timer) {
@@ -148,6 +174,10 @@ controllers.controller('DashboardCtrl', ['$scope', '$state', '$stateParams', '$i
 	}
     };
 
+    /**
+     * Checks if auction is completed
+     * @returns
+     */
     $scope.completed = function() {
 	return $scope.hideinput;
     }
