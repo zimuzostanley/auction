@@ -11,10 +11,18 @@ coins used in purchasing are deducted from his/her account. The auctioner's inve
 
 ### Node.js and Tools
 
-- Get [Node.js][node-download].
+- Get Node.js from https://nodejs.org/en/download/
 - Install the tool dependencies (`npm install`).
 
 ### MySQL
+- See http://dev.mysql.com/doc/refman/5.7/en/installing.html for install instructions for your platform
+- Create a MySQL user and change the MySQL username and password in the ```code/scripts/startup.sh``` file
+- cd into the code/ directory and run:
+
+```
+chmod +x scripts/startup.sh
+bash scripts/startup.sh
+```
 
 
 ## Workings of the application
@@ -33,13 +41,13 @@ npm install
 
 This will also run bower, which will download the angular files needed.
 
-### Unit testing
+### Unit testing using Karma/Mocha
 Run:
 ```
 npm test
 ```
 
-### End to end testing
+### End to end testing using Protractor/Jasmine
 Start local server:
 ```
 npm start
@@ -91,3 +99,13 @@ npm run protractor
         controllersSpec.js --> specs for controllers
         directivesSpec.js  --> specs for directives
         servicesSpec.js    --> specs for services
+
+## Issue
+- Some disparity in the timing of the server and client. This leads to spurious behaviour when, say, the server finishes counting down to an auction, meanwhile the client
+is still counting down to the user. Maybe, NTP could help. I think that's a bit overkill though.
+- A related but even more noticeable issue was that chrome and some other browsers, pause long running background activity when the tab is not in focus. The timer was beign paused and it was causing a noticeable lag in the time remainging on the server and browser. I listened to the ```window.onfocus``` event and refresh the page, whenever the tab came in focus.
+- Currently, there's no support for atomicity of the operations at auction completion or other critical stages. I intend to use the facilities of MySQL to group the critical operations as atomic operations.
+
+## Suggestion
+- I think in future Jasmine should be specified as the testing framework. It's very similar to Mocha and is self contained, in that it comes with an assertion library and a mocking library that would be suitable for most needs in a project like this. Besides, Protractor, a really helpful test-runner advertises strong support for Jasmine. This would help prevent needless errors when applicants try to use a less supported tool for a job.
+

@@ -20,7 +20,7 @@ var Auction = function(auction, timer, listener, conn) {
     var self = this;
 
     this.timer = timer(function() {
-	console.log(self.time);
+	//console.log(self.time);
 	if (--self.time <= 0) {
 	    self.end_auction(conn, function() {
 		return self.listener(); // Auction has ended

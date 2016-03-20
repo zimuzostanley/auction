@@ -30,7 +30,7 @@ describe('AuctionApp', function() {
     });
 
     describe('Initial content', function() {
-	var _name = 'zim';
+	var _name = 'zimye';
 	var _coins = '1000'
 
 	var _bread = '30';
@@ -73,11 +73,42 @@ describe('AuctionApp', function() {
     });
 
     describe('Auction', function() {
+	// Already logged in from earlier suite
+	var _quantity = 5;
+	var _min_bid = 2;
 
-	it('should create an auction when inventory button is clicked', function() {
-	    
+	/**
+	 * N.B. This test could fail if there are queued items in the database the auction is
+	 * in a pause cycle at the moment. It just tests 'bread' inventory
+	 */
+	it('should create auction when the "auction" button is clicked', function() {
+	    // Get bread (inventory) inputs to create auction
+	    var inventory = element.all(by.repeater('item in inventory'));
+	    var bread = inventory.get(0);
+
+	    // Enter fields and click
+	    bread.element(by.model('item.input')).sendKeys(_quantity);
+	    bread.element(by.model('item.cur_bid_amount')).sendKeys(_min_bid);
+	    element(by.css('[ng-click="place_auction(item.id, item.name, item.input, item.cur_bid_amount)"]')).click().then(function(alert_text) {
+		browser.switchTo().alert().accept();
+		// Expect
+		expect(element(by.css('[ng-show="auction.item"]')).isDisplayed()).toBeTruthy();
+	    });
+	    	    
 	});
 
-	it('should create')
+	it('should place a bid when the "place bid" button is clicked', function() {
+	    // Get auction inputs to place bid. Enter bid and click
+	    element(by.model('amount')).sendKeys(_min_bid + 1);
+	    element(by.css('[ng-click="bid(amount, auction)"]')).click().then(function(alert_text) {
+		browser.switchTo().alert().accept();
+
+		// Expect
+		element(by.binding('auction.cur_bid_amount')).getText().then(function(bid) {
+		    expect(parseInt(bid)).toBe(_min_bid + 1);
+		});
+	    });;
+
+	});
     });
 });

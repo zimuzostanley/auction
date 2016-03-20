@@ -186,6 +186,15 @@ describe('Controllers', function() {
 	    should(scope.sufficient_auction(40, false)).be.true;
 	    should(scope.sufficient_auction('b', 40)).be.true;
 	});
+
+	it('should check if the "cur_bid_player_name" is available in the scope', function() {
+	    scope.cur_bid_player_name = "zim";
+	    should(scope.won()).be.true;
+	    scope.cur_bid_player_name = "";
+	    should(scope.won()).be.false;
+	    scope.cur_bid_player_name = "zim";
+	    should(scope.won()).be.false;
+	});
     });
 
     describe('LoginCtrl', function() {

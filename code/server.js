@@ -195,7 +195,6 @@ conn.connect(function(err) {
 
     // POST: Called when an auction is created
     app.post('/api/v1/auction', function(req, res, next) {
-	console.log(req.body);
 	conn.query('INSERT INTO Auction SET ?', {item: req.body.item, quantity: req.body.quantity, player_id: req.body.player_id, cur_state: req.body.cur_state, cur_bid_amount: req.body.cur_bid_amount}, function(err, row) {
 	    if (err || !row) {
 		return next(err);
