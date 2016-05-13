@@ -1,10 +1,10 @@
-/*
+ /*
 * Initialization script for auction database.
 * Creates the database and schemas.
 * Prerequisite: create a user with permissions on the 'auction' database or
 * whatever you name your database (<db_name>). E.g:
 * 1. CREATE USER '<user>'@'localhost' IDENTIFIED BY 'password'; // Create user
-* 2. GRANT ALL PRIVILEGES ON '<db_name>'.* TO '<user>'@'localhost'; // Grant privileges
+* 2. GRANT ALL PRIVILEGES ON <db_name>.* TO '<user>'@'localhost'; // Grant privileges
 * 3. FLUSH PRIVILEGES // Save privileges;
 */
 
